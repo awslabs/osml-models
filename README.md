@@ -19,7 +19,7 @@ This package contains sample models that can be used to test OversightML install
 
 First, ensure you have installed the following tools locally
 
-- [docker](https://nodejs.org/en)
+- [docker](https://docs.docker.com/get-started/)
 
 ### Installation Guide
 
@@ -39,11 +39,15 @@ version of the API documents.
 tox -e docs
 ```
 
+Once the documentation website is generated, it can be accessed in your browser at the following URL:
+file://[full path to osml-models repository root]/.tox/docs/tmp/html/index.html
+
 ### Build and Local Testing
 
-To build the container, it uses the default `Dockerfile` from the root of this repository. If you want to change to another `Dockerfile`, replace the `.` with the new `Dockerfile` path.
+To build the container, it uses the default `docker/Dockerfile`. If you want to change to another `Dockerfile`, replace the `docker/Dockerfile` with the new `Dockerfile` path.
+
 ```bash
-docker build . -t osml-models:latest
+docker build . -t osml-models:latest -f docker/Dockerfile
 ```
 
 **Note**: The `MODEL_SELECTION` environment variable can be used to pick the model to run. Currently, we support 3 different types of a model and below are the appropriate naming convention:
