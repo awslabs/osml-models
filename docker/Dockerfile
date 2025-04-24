@@ -1,7 +1,7 @@
-# Copyright 2023-2024 Amazon.com, Inc. or its affiliates.
+# Copyright 2023-2025 Amazon.com, Inc. or its affiliates.
 
 # Use NVIDIA's CUDA base image
-FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu18.04 as build-env
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu18.04 AS build-env
 
 # Set AWS to the maintainer
 LABEL maintainer="Amazon Web Services"
@@ -82,7 +82,7 @@ RUN apt-get clean && \
     python -m pip cache purge
 
 # Stage 2: Build the final image
-FROM nvidia/cuda:11.6.2-cudnn8-runtime-ubuntu18.04 as osml_model
+FROM nvidia/cuda:11.6.2-cudnn8-runtime-ubuntu18.04 AS osml_model
 
 LABEL maintainer="Amazon Web Services"
 USER root
