@@ -26,7 +26,7 @@ First, ensure you have installed the following tools locally
 Clone `osml-models` package into your desktop
 
 ```sh
-git clone https://github.com/aws-solutions-library-samples/osml-models.git
+git clone https://github.com/awslabs/osml-models.git
 ```
 
 
@@ -80,7 +80,7 @@ Executing above should return:
 OversightML Models are maintained by AWS Solution Architects.
 It is not part of an AWS service and support is provided best-effort by the OversightML community.
 
-To post feedback, submit feature ideas, or report bugs, please use the [Issues](https://github.com/aws-solutions-library-samples/osml-models/issues) section of this GitHub repo.
+To post feedback, submit feature ideas, or report bugs, please use the [Issues](https://github.com/awslabs/osml-models/issues) section of this GitHub repo.
 
 If you are interested in contributing to OversightML Models, see the [CONTRIBUTING](CONTRIBUTING.md) guide.
 
