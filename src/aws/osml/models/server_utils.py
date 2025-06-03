@@ -1,6 +1,7 @@
-#  Copyright 2023-2024 Amazon.com, Inc. or its affiliates.
+#  Copyright 2023-2025 Amazon.com, Inc. or its affiliates.
 
 import logging
+import os
 import sys
 from secrets import token_hex
 from typing import Dict, List, Optional, Union
@@ -48,15 +49,17 @@ def setup_server(app: Flask):
     :param app: The flask application to set up
     :return: None
     """
+    port = int(os.getenv("SAGEMAKER_BIND_TO_PORT", 8080))
+
     # Log all arguments in a single log message
-    app.logger.debug("Initializing OSML Model Flask server!")
+    app.logger.debug(f"Initializing OSML Model Flask server on port {port}!")
 
     # Start the simple web application server using Waitress.
     # Flask's app.run() is only intended to be used in development
     #  mode, so this provides a solution for hosting the application.
     from waitress import serve
 
-    serve(app, host="0.0.0.0", port=8080, clear_untrusted_proxy_headers=True)
+    serve(app, host="0.0.0.0", port=port, clear_untrusted_proxy_headers=True)
 
 
 def build_flask_app(logger: logging.Logger) -> Flask:

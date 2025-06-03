@@ -85,6 +85,8 @@ RUN apt-get clean && \
 FROM nvidia/cuda:11.6.2-cudnn8-runtime-ubuntu18.04 AS osml_model
 
 LABEL maintainer="Amazon Web Services"
+# Support multi-container SageMaker endpoints
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 USER root
 
 # Copy only the necessary files from the build environment
