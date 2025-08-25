@@ -35,6 +35,12 @@ ENV PROJ_LIB=$PROJ_LIB:/opt/conda/share/proj
 
 # Copy the conda environment file and create the environment
 COPY conda/environment-py310.yml environment.yml
+
+# Accept Conda TOS before creating the environment
+RUN conda config --set always_yes true && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
 RUN conda env create -n ${CONDA_TARGET_ENV} --file environment.yml && \
     conda clean -afy && \
     find /opt/conda/ -follow -type f -name '*.a' -delete && \
