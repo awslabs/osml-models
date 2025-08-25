@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: release
+      url: https://pypi.org/project/osml-models
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,4 +27,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
           python -m build
-      - uses: pypa/gh-action-pypi-publish@v1.8.11
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
