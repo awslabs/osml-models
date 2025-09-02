@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   deploy:
@@ -29,4 +28,4 @@ jobs:
           python -m build
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          verbose: true
+          password: ${{ secrets.PYPI_API_TOKEN }}
