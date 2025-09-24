@@ -14,7 +14,7 @@ from osgeo import gdal
 gdal.UseExceptions()
 
 
-def build_logger(level: int = logging.WARN) -> logging.Logger:
+def build_logger(level: int = logging.INFO) -> logging.Logger:
     """
     Utility function to create and configure a logger that outputs logs in JSON format.
 
@@ -52,7 +52,7 @@ def setup_server(app: Flask):
     port = int(os.getenv("SAGEMAKER_BIND_TO_PORT", 8080))
 
     # Log all arguments in a single log message
-    app.logger.debug(f"Initializing OSML Model Flask server on port {port}!")
+    app.logger.info(f"Initializing OSML Model Flask server on port {port}!")
 
     # Start the simple web application server using Waitress.
     # Flask's app.run() is only intended to be used in development
@@ -84,7 +84,14 @@ def build_flask_app(logger: logging.Logger) -> Flask:
     app.logger.setLevel(logger.level)
 
     if json_logging._current_framework is None:
+        # Suppress debug messages from json_logging initialization
+        import logging
+
+        json_logger = logging.getLogger("json_logging")
+        original_level = json_logger.level
+        json_logger.setLevel(logging.WARNING)
         json_logging.init_flask(enable_json=True)
+        json_logger.setLevel(original_level)
 
     return app
 

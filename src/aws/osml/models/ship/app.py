@@ -4,12 +4,10 @@ import json
 import os
 import uuid
 import warnings
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
-import cv2
 import numpy as np
 import torch
-from detectron2 import model_zoo
 from detectron2.config import get_cfg
 from detectron2.engine import DefaultPredictor
 from detectron2.structures.instances import Instances
@@ -17,6 +15,7 @@ from flask import Request, Response, request
 from osgeo import gdal
 
 from aws.osml.models import build_flask_app, build_logger, setup_server
+from aws.osml.models.ship.config import build_config
 
 ENABLE_SEGMENTATION = os.environ.get("ENABLE_SEGMENTATION", "False").lower() == "true"
 ENABLE_FAULT_DETECTION = os.environ.get("ENABLE_FAULT_DETECTION", "False").lower() == "true"
@@ -31,30 +30,24 @@ logger = build_logger()
 app = build_flask_app(logger)
 
 # Test logging
-app.logger.info("Starting aircraft model application...")
+app.logger.info("Starting ship model application...")
 
 
 def build_predictor() -> DefaultPredictor:
     """
-    Create a single detection predictor to detect aircraft
+    Create a single detection predictor to detect ships
     :return: DefaultPredictor
     """
     # Load the prebuilt plane model w/ Detectron2
     cfg = get_cfg()
-    # If we can't find a gpu
+
+    # Set to only expect one class (ships)
+    cfg = build_config()
+
+    # If we can't find a gpu, set device to CPU after config is built
     if not torch.cuda.is_available():
         cfg.MODEL.DEVICE = "cpu"
         app.logger.info("GPU not found, running in CPU mode!")
-    # Set to only expect one class (aircraft)
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 1
-    # Set the detection threshold to 90%
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.9
-    # Add project-specific config used for training to remove warnings
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-    # Path to the model weights
-    cfg.MODEL.WEIGHTS = os.getenv(
-        os.path.join("MODEL_WEIGHTS"), os.path.join("/home/osml-models/assets/", "aircraft_model_weights.pth")
-    )
 
     # Build the detectron2 default predictor with error handling for CPU mode
     try:
@@ -81,33 +74,6 @@ def build_predictor() -> DefaultPredictor:
             raise e
 
 
-def mask_to_polygon(mask: torch.Tensor) -> List[List[float]]:
-    """
-    Convert a detectron2 instance mask in the form of a Tensor to a list-form polygon representing the mask.
-
-    :param mask: A detectron2 instance mask in the form of a Tensor
-    :return: A list form polygon representing the mask
-    """
-    # Convert tensor to numpy
-    mask_np = mask.cpu().numpy().astype(np.uint8)
-
-    # Convert mask to 255 (fully white) and 0 (black)
-    _, binary_mask = cv2.threshold(mask_np, 0.5, 255, cv2.THRESH_BINARY)
-
-    # Find contours
-    contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-    # Simplify contour if you want to save some cost in exchange
-    # for reduced resolution on the masks
-    # epsilon = 0.005 * cv2.arcLength(contours[0], True)
-    # approx = cv2.approxPolyDP(contours[0], epsilon, True)
-
-    # Convert contour to a list of lists
-    polygon = [point[0].tolist() for point in contours[0]]
-
-    return polygon
-
-
 def instances_to_feature_collection(
     instances: Instances, image_id: Optional[str] = str(uuid.uuid4())
 ) -> Dict[str, Union[str, list]]:
@@ -125,15 +91,8 @@ def instances_to_feature_collection(
         # Get the bounding boxes for this image
         bboxes = instances.pred_boxes.tensor.cpu().numpy().tolist()
 
-        # Get the scores for this image
+        # Get the scores for this image, this model does not support segmentation
         scores = instances.scores.cpu().numpy().tolist()
-
-        # Default masks to None
-        masks = None
-
-        # Get the polygon masks for this image if segmentation is enabled
-        if ENABLE_SEGMENTATION:
-            masks = instances.pred_masks.cpu()
 
         for i in range(0, len(bboxes)):
             feature = {
@@ -143,12 +102,10 @@ def instances_to_feature_collection(
                 "properties": {
                     "bounds_imcoords": bboxes[i],
                     "detection_score": float(scores[i]),
-                    "feature_types": {"aircraft": float(scores[i])},
+                    "feature_types": {"ship": float(scores[i])},
                     "image_id": image_id,
                 },
             }
-            if masks is not None:
-                feature["properties"]["geom_imcoords"] = mask_to_polygon(masks[i])
             app.logger.debug(feature)
             geojson_feature_collection_dict["features"].append(feature)
     else:
@@ -208,7 +165,7 @@ def request_to_instances(req: Request) -> Union[Instances, None]:
         # PyTorch can often give warnings about upcoming changes
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            instances = aircraft_predictor(image)["instances"]
+            instances = ship_detector(image)["instances"]
     except Exception as err:
         app.logger.error(f"Unable to load tile from request: {err}")
         raise err
@@ -224,9 +181,9 @@ def request_to_instances(req: Request) -> Union[Instances, None]:
     return instances
 
 
-# Build our aircraft predictor
-aircraft_predictor = build_predictor()
-app.logger.info("Aircraft model predictor initialized successfully!")
+# Build our ship predictor
+ship_detector = build_predictor()
+app.logger.info("Ship model predictor initialized successfully!")
 
 
 @app.route("/ping", methods=["GET"])
@@ -250,7 +207,7 @@ def predict() -> Response:
 
     :return: Response: Contains the GeoJSON results or an error status
     """
-    app.logger.debug("Invoking model endpoint using the Detectron2 Aircraft Model!")
+    app.logger.debug("Invoking model endpoint using the Detectron2 Ship Model!")
     try:
         # Load the image into memory and get detection instances
         app.logger.debug("Loading image request.")
