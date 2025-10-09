@@ -50,11 +50,12 @@ To build the container, it uses the default `docker/Dockerfile`. If you want to 
 docker build . -t osml-models:latest -f docker/Dockerfile
 ```
 
-**Note**: The `MODEL_SELECTION` environment variable can be used to pick the model to run. Currently, we support 3 different types of a model and below are the appropriate naming convention:
+**Note**: The `MODEL_SELECTION` environment variable can be used to pick the model to run. Currently, we support 4 different types of a model and below are the appropriate naming convention:
 
-- centerpoint
-- flood
-- aircraft
+- failure: returns exception and failure states of a "bad" model
+- centerpoint: returns a circular centerpoint polygon of an image
+- flood: returns "N" number of polygons in an image
+- aircraft: utilizes detectron2 to detect and highlight aircraft with polygons
 
 In one terminal, run the following command to start the server:
 ```bash
