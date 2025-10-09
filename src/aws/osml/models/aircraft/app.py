@@ -1,4 +1,4 @@
-#  Copyright 2023-2024 Amazon.com, Inc. or its affiliates.
+#  Copyright 2023-2025 Amazon.com, Inc. or its affiliates.
 
 import json
 import os
@@ -112,19 +112,21 @@ def instances_to_feature_collection(
             masks = instances.pred_masks.cpu()
 
         for i in range(0, len(bboxes)):
+            bbox = bboxes[i]
             feature = {
                 "type": "Feature",
-                "geometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+                "geometry": None,
                 "id": str(uuid.uuid4()),
                 "properties": {
-                    "bounds_imcoords": bboxes[i],
-                    "detection_score": float(scores[i]),
-                    "feature_types": {"aircraft": float(scores[i])},
-                    "image_id": image_id,
+                    "imageGeometry": {"type": "Point", "coordinates": [0.0, 0.0]},
+                    "imageBBox": bbox,
+                    "featureClasses": [{"iri": "aircraft", "score": float(scores[i])}],
+                    "modelMetadata": {"modelName": "aircraft", "ontologyName": "aircraft", "ontologyVersion": "1.0.0"},
+                    "image_id": str(uuid.uuid4()),
                 },
             }
             if masks is not None:
-                feature["properties"]["geom_imcoords"] = mask_to_polygon(masks[i])
+                feature["properties"]["imageGeometry"] = {"type": "Polygon", "coordinates": [mask_to_polygon(masks[i])]}
             app.logger.debug(feature)
             geojson_feature_collection_dict["features"].append(feature)
     else:
