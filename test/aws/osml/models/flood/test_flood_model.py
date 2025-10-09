@@ -1,4 +1,4 @@
-#  Copyright 2023-2024 Amazon.com, Inc. or its affiliates.
+#  Copyright 2023-2025 Amazon.com, Inc. or its affiliates.
 
 import json
 import os
@@ -64,7 +64,7 @@ class FloodModelTest(unittest.TestCase):
 
         The method checks the `type` and `features` fields and compares the geometries
         and properties of the features. Due to the unique `image_id` and randomized
-        `bounds_imcoords`, these properties are overwritten for accurate comparison.
+        `imageBBox`, these properties are overwritten for accurate comparison.
         """
         assert actual_geojson_result.get("type") == expected_json_result.get("type")
         assert len(actual_geojson_result.get("features")) == len(expected_json_result.get("features"))
@@ -74,12 +74,12 @@ class FloodModelTest(unittest.TestCase):
         ):
             assert actual_result.get("geometry") == expected_result.get("geometry")
 
-            # Handle image_id and bounds_imcoords differences
+            # Handle image_id and imageBBox differences
             actual_image_id = actual_result["properties"]["image_id"]
             expected_result["properties"]["image_id"] = actual_image_id
 
-            actual_bounds_imcoords = actual_result["properties"]["bounds_imcoords"]
-            expected_result["properties"]["bounds_imcoords"] = actual_bounds_imcoords
+            actual_image_bbox = actual_result["properties"]["imageBBox"]
+            expected_result["properties"]["imageBBox"] = actual_image_bbox
 
     def test_predict_flood_model(self):
         """
@@ -90,7 +90,7 @@ class FloodModelTest(unittest.TestCase):
 
         The `compare_two_geojson_results` method is used to assert that the predicted
         result is correct after accounting for differences in `image_id` and
-        `bounds_imcoords`.
+        `imageBBox`.
         """
         data_binary = open("assets/images/2_planes.tiff", "rb")
         response = self.client.post("/invocations", data=data_binary)
