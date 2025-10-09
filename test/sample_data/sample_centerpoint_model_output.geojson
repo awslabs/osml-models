@@ -2,60 +2,66 @@
   "type": "FeatureCollection",
   "features": [
     {
-      "geometry": {
-        "coordinates": [
-          0,
-          0
-        ],
-        "type": "Point"
-      },
-      "id": "193ca21caf8b7a0ae6c82e0feca23336",
+      "geometry": null,
+      "id": "89abda35b0281bce6e5a3944c9480700",
       "properties": {
-        "bounds_imcoords": [
+        "featureClasses": [
+          {
+            "iri": "sample_object",
+            "score": 1.0
+          }
+        ],
+        "imageBBox": [
           204.8,
           204.8,
           307.2,
           307.2
         ],
-        "detection_score": 1,
-        "feature_types": {
-          "sample_object": 1
+        "imageGeometry": {
+          "coordinates": [
+            [
+              [
+                281.6,
+                307.2
+              ],
+              [
+                259.4297,
+                294.4
+              ],
+              [
+                259.4297,
+                268.8
+              ],
+              [
+                281.6,
+                256.0
+              ],
+              [
+                303.7703,
+                268.8
+              ],
+              [
+                303.7703,
+                294.4
+              ],
+              [
+                281.6,
+                307.2
+              ],
+              [
+                281.6,
+                307.2
+              ]
+            ]
+          ],
+          "type": "Polygon"
         },
-        "image_id": "673c80a467182c1c1252d83631c52780",
-        "geom_imcoords": [
-          [
-            281.6,
-            307.2
-          ],
-          [
-            259.4297,
-            294.4
-          ],
-          [
-            259.4297,
-            268.8
-          ],
-          [
-            281.6,
-            256
-          ],
-          [
-            303.7703,
-            268.8
-          ],
-          [
-            303.7703,
-            294.4
-          ],
-          [
-            281.6,
-            307.2
-          ],
-          [
-            281.6,
-            307.2
-          ]
-        ]
+        "image_id": "83f6562dd30066413abcaced63a51892",
+        "modelMetadata": {
+          "modelName": "centerpoint",
+          "ontologyName": "centerpoint",
+          "ontologyVersion": "1.0.0"
+        }
       },
       "type": "Feature"
     }
