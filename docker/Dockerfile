@@ -19,7 +19,7 @@ RUN apt-get update -y \
             libtiff5-dev
 
 # Install Miniconda
-ARG MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64
+ARG MINICONDA_VERSION=Miniconda3-py310_23.3.1-0-Linux-x86_64
 ARG MINICONDA_URL=https://repo.anaconda.com/miniconda/${MINICONDA_VERSION}.sh
 ENV CONDA_TARGET_ENV=osml_model
 RUN wget -c ${MINICONDA_URL} \
@@ -36,10 +36,10 @@ ENV PROJ_LIB=$PROJ_LIB:/opt/conda/share/proj
 # Copy the conda environment file and create the environment
 COPY conda/environment-py310.yml environment.yml
 
-# Accept Conda TOS before creating the environment
+# Accept Conda TOS before creating the environment (conditional for older conda versions)
 RUN conda config --set always_yes true && \
-    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
-    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+    (conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true) && \
+    (conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true)
 
 RUN conda env create -n ${CONDA_TARGET_ENV} --file environment.yml && \
     conda clean -afy && \
@@ -65,7 +65,8 @@ RUN . /opt/conda/etc/profile.d/conda.sh && conda activate ${CONDA_TARGET_ENV} &&
     tqdm==4.62.3 \
     tensorboard==2.8.0 \
     opencv-contrib-python-headless==4.8.0.76 \
-    setuptools==69.5.1
+    setuptools==69.5.1 \
+    "pillow<10"
 
 # Install Torch with GPU support
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate ${CONDA_TARGET_ENV} && \
@@ -74,12 +75,12 @@ RUN . /opt/conda/etc/profile.d/conda.sh && conda activate ${CONDA_TARGET_ENV} &&
     torchvision==0.13.0+cu116 \
     -f https://download.pytorch.org/whl/torch_stable.html
 
-# Install Detectron2
+# Install Detectron2 (pinned to v0.6 for torch 1.12 compatibility)
 ENV FORCE_CUDA="1"
 ARG TORCH_CUDA_ARCH_LIST="Pascal;Volta;Turing"
 ENV TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}"
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate ${CONDA_TARGET_ENV} && \
-    python3 -m pip install --no-cache-dir --no-deps 'git+https://github.com/facebookresearch/detectron2.git'
+    python3 -m pip install --no-cache-dir --no-build-isolation 'git+https://github.com/facebookresearch/detectron2.git@v0.6'
 
 # Clean up unnecessary files
 RUN apt-get clean && \
