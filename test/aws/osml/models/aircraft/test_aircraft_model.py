@@ -1,13 +1,25 @@
-#  Copyright 2023-2024 Amazon.com, Inc. or its affiliates.
+#  Copyright 2023-2025 Amazon.com, Inc. or its affiliates.
 
 import json
 import os
 import unittest
 
+import pytest
 from moto import mock_aws
+
+# Check if aircraft model dependencies are available, suppress flake8 on imports
+try:
+    import cv2  # noqa: F401
+    import detectron2  # noqa: F401
+    import torch  # noqa: F401
+
+    AIRCRAFT_DEPS_AVAILABLE = True
+except ImportError:
+    AIRCRAFT_DEPS_AVAILABLE = False
 
 
 @mock_aws
+@pytest.mark.skipif(not AIRCRAFT_DEPS_AVAILABLE, reason="Aircraft model dependencies (cv2, torch, detectron2) not available")
 class AircraftModelTest(unittest.TestCase):
     """
     Unit test case for testing Flask endpoints in the aircraft detection app.
