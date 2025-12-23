@@ -8,6 +8,11 @@ This package contains sample models that can be used to test OversightML install
     * [Installation Guide](#installation-guide)
     * [Documentation](#documentation)
     * [Build and Local Testing](#build-and-local-testing)
+* [CDK Deployment](#cdk-deployment)
+    * [Quick Start](#quick-start)
+    * [What Gets Deployed](#what-gets-deployed)
+    * [Key Features](#key-features)
+    * [Documentation](#documentation-1)
 * [Support & Feedback](#support--feedback)
 * [Resources](#resources)
 * [Security](#security)
@@ -72,6 +77,62 @@ Executing above should return:
 ```
 {"type": "FeatureCollection", "features": [{"geometry": {"coordinates": [0.0, 0.0], "type": "Point"}, "id": "7683a11e4c93f0332be9a4a53e0c6762", "properties": {"bounds_imcoords": [204.8, 204.8, 307.2, 307.2], "detection_score": 1.0, "feature_types": {"sample_object": 1.0}, "image_id": "8cdac8849cae2b4a8885c0dd0d34f722"}, "type": "Feature"}]}
 ```
+
+## CDK Deployment
+
+For production deployments on AWS, this project includes AWS CDK infrastructure code that deploys the model as a SageMaker endpoint with proper networking, security, and monitoring.
+
+### Quick Start
+
+```bash
+cd cdk
+npm install
+cp bin/deployment/deployment.json.example bin/deployment/deployment.json
+# Edit deployment.json with your AWS account details
+npm run build
+npm test
+cdk deploy --all
+```
+
+### What Gets Deployed
+
+The CDK application deploys:
+
+- **SageMaker Endpoint**: Real-time inference endpoint for the aircraft detection model
+- **VPC and Networking**: Secure network configuration with private subnets
+- **IAM Roles**: Least-privilege execution roles for SageMaker
+- **Security Groups**: Network security rules for endpoint access
+- **Container Management**: Automated container build and deployment to ECR
+
+### Key Features
+
+- **Flexible Configuration**: Deploy with existing VPC or create new infrastructure
+- **Security Validation**: Integrated CDK-Nag checks for AWS best practices
+- **Build Options**: Build container from source or pull from registry
+- **GPU Support**: Configured for GPU instances (ml.g4dn.xlarge) for optimal performance
+- **Infrastructure as Code**: Version-controlled, repeatable deployments
+
+### Documentation
+
+For detailed deployment instructions, configuration options, and troubleshooting, see the [CDK README](cdk/README.md).
+
+Key topics covered:
+- [Configuration Options](cdk/README.md#configuration) - Account, network, and model endpoint settings
+- [Deployment Instructions](cdk/README.md#deployment-instructions) - Step-by-step deployment guide
+- [Security Best Practices](cdk/README.md#security--best-practices) - IAM, networking, and compliance
+- [Troubleshooting](cdk/README.md#troubleshooting) - Common issues and solutions
+
+### Integration Testing
+
+The OSML Models package includes comprehensive integration testing infrastructure that validates the deployed SageMaker endpoint. Integration tests verify that the model endpoint deployment and availability.
+
+For detailed information configuring integration test infrastructure, see the [Integration Testing section](cdk/README.md#integration-testing) in the CDK Deployment Guide.
+
+Running the integration tests:
+
+1. Deploy the infrastructure with integration tests enabled (see [CDK Deployment Guide](cdk/README.md))
+2. Run the integration test script: `bash scripts/model_endpoint_integ.sh`
+3. Review test results and logs
 
 ## Support & Feedback
 

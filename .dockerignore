@@ -19,3 +19,8 @@
 **/build
 **/dist
 **/htmlcov
+.git
+.github
+.kiro
+cdk
+test/data

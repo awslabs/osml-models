@@ -1,0 +1,26 @@
+# Copyright 2025 Amazon.com, Inc. or its affiliates.
+
+FROM public.ecr.aws/lambda/python:3.13 AS integ
+
+# Build time arguments
+ARG BUILD_CERT=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+ARG PIP_INSTALL_LOCATION=https://pypi.org/simple/
+
+# Give sudo permissions
+USER root
+
+# Configure, update, and refresh yum environment
+RUN dnf -y upgrade && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf
+
+# Copy the function code to the LAMBDA_TASK_ROOT directory
+ADD . ${LAMBDA_TASK_ROOT}
+
+# Install the package with integ test dependencies
+RUN pip install --no-cache-dir --root-user-action=ignore \
+    boto3>=1.42.15 \
+    python-json-logger>=4.0.0
+
+# Set entry point
+CMD ["test.integ_processor.handler"]
