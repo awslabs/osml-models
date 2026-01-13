@@ -1,25 +1,53 @@
+# Temporary files
 *~
 *#
 *.swp
+
+# IDE files
 *.iml
 *.DS_Store
-*.tox
 *.idea
+
+# Python virtual environments
 *venv
-*result.txt
-*results.txt
+
+# Tox environment files
+*.tox
+tox_conda_tmp*
+condaenv*
+
+# Text files
+*aggregated_results.txt
+
+# Model assets (users must download separately)
+assets/bpe_simple_vocab_16e6.txt.gz
+assets/sam3.pt
+
+# Python compiled files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+
+# Python egg info
 *.egg-info/
 
-/.coverage
-/.coverage.*
-/.cache
-/.pytest_cache
-/.mypy_cache
+# Coverage reports
+.coverage
+.coverage.*
+.cache
+.pytest_cache
+.mypy_cache
 
+# Documentation auto-generated files
+/doc/autoapi/
 /doc/_apidoc/
+
+# Build and distribution directories
 /build
 /dist
 /htmlcov
+
+# Log file outputs
+*.log
+logs/

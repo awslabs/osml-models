@@ -1,0 +1,137 @@
+# Copyright 2023-2026 Amazon.com, Inc. or its affiliates.
+
+# Stage 1: Build environment
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal AS build
+
+ARG BUILD_CERT=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+ARG PIP_INSTALL_LOCATION=https://pypi.org/simple/
+ARG PYTHON_VERSION=3.12
+ENV PATH=/opt/conda/bin:$PATH
+ENV CONDA_TARGET_ENV=osml_model_sam3
+
+WORKDIR /home
+
+USER root
+RUN dnf update -y && dnf install -y wget shadow-utils gcc gcc-c++ make git && dnf clean all
+
+# Install Miniconda with architecture detection
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
+        MINICONDA_VERSION="Miniconda3-latest-Linux-aarch64"; \
+    else \
+        MINICONDA_VERSION="Miniconda3-latest-Linux-x86_64"; \
+    fi && \
+    MINICONDA_URL="https://repo.anaconda.com/miniconda/${MINICONDA_VERSION}.sh" && \
+    echo "Auto-detected architecture: $ARCH, installing: ${MINICONDA_VERSION}" && \
+    wget -c ${MINICONDA_URL} && \
+    chmod +x ${MINICONDA_VERSION}.sh && \
+    ./${MINICONDA_VERSION}.sh -b -f -p /opt/conda && \
+    rm ${MINICONDA_VERSION}.sh && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
+
+# Set up conda environment
+COPY conda/environment-sam3.yml environment.yml
+RUN conda config --set always_yes true && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+RUN conda create -n ${CONDA_TARGET_ENV} -c conda-forge python=${PYTHON_VERSION} git -y \
+     && conda env update -n ${CONDA_TARGET_ENV} -f environment.yml \
+     && conda clean -afy \
+     && find /opt/conda/ -follow -type f \( -name '*.a' -o -name '*.pyc' -o -name '*.pyo' -o -name '*.js.map' \) -delete \
+     && find /opt/conda/ -follow -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+
+# Install PyTorch and SAM3 dependencies
+ARG TORCH_VERSION=2.5.1
+ARG CUDA_VERSION=cu118
+RUN conda run -n ${CONDA_TARGET_ENV} python3 -m pip install --no-cache-dir \
+    torch==${TORCH_VERSION} \
+    torchvision \
+    torchaudio \
+    --index-url https://download.pytorch.org/whl/${CUDA_VERSION}
+
+RUN conda run -n ${CONDA_TARGET_ENV} python3 -m pip install --no-cache-dir \
+    psutil \
+    sam3==0.1.2
+
+# Download BPE vocabulary file (required by SAM3 but not included in PyPI package)
+# The file is not available on Hugging Face, so download from FlashFace-SD1.5 repository
+RUN mkdir -p /opt/conda/envs/${CONDA_TARGET_ENV}/lib/python3.12/site-packages/assets && \
+    conda run -n ${CONDA_TARGET_ENV} python3 -c "from huggingface_hub import hf_hub_download; import shutil; bpe_file = hf_hub_download(repo_id='shilongz/FlashFace-SD1.5', filename='bpe_simple_vocab_16e6.txt.gz'); shutil.copy(bpe_file, '/opt/conda/envs/${CONDA_TARGET_ENV}/lib/python3.12/site-packages/assets/bpe_simple_vocab_16e6.txt.gz'); print('✓ BPE vocabulary file downloaded successfully')" && \
+    ls -lh /opt/conda/envs/${CONDA_TARGET_ENV}/lib/python3.12/site-packages/assets/bpe_simple_vocab_16e6.txt.gz && \
+    echo "✓ BPE vocabulary file available"
+
+RUN conda run -n ${CONDA_TARGET_ENV} python3 -c "import torch; import torchvision; import sam3; print(f'PyTorch: {torch.__version__}, torchvision: {torchvision.__version__}, SAM3 installed successfully')"
+
+# Create checkpoint directory and copy checkpoint file from build context
+RUN mkdir -p /opt/checkpoint
+COPY assets/sam3.pt /opt/checkpoint/sam3.pt
+RUN ls -lh /opt/checkpoint/sam3.pt && \
+    echo "✓ Checkpoint file copied successfully"
+
+# Install osml-models package
+COPY . /home/osml-models
+WORKDIR /home/osml-models
+RUN conda run -n ${CONDA_TARGET_ENV} python3 -m pip install --no-cache-dir .
+
+RUN conda run -n ${CONDA_TARGET_ENV} python3 -m compileall -q /home/osml-models/src || true
+
+# Stage 2: Runtime environment
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal AS osml_model_sam3
+
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
+LABEL maintainer="Amazon Web Services"
+
+WORKDIR /home
+
+RUN dnf install -y shadow-utils bash && dnf clean all
+
+# Copy artifacts from build stage
+COPY --from=build /opt/conda /opt/conda
+RUN ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
+COPY --from=build /home/osml-models /home/osml-models
+COPY --from=build /opt/checkpoint /opt/checkpoint
+
+# Configure runtime environment
+ENV CONDA_TARGET_ENV=osml_model_sam3
+ENV PATH=/opt/conda/bin:$PATH
+ENV GDAL_DRIVER_PATH=/opt/conda/envs/${CONDA_TARGET_ENV}/lib/gdalplugins
+ENV LD_LIBRARY_PATH=/opt/conda/envs/${CONDA_TARGET_ENV}/lib
+ENV PROJ_LIB=/opt/conda/envs/${CONDA_TARGET_ENV}/share/proj
+ENV PYTHONUNBUFFERED=1
+ENV ENABLE_TORCH_COMPILE=true
+ENV MIXED_PRECISION=bf16
+ENV PREWARM_GPU=true
+ENV TORCH_COMPILE_MODE=reduce-overhead
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONOPTIMIZE=1
+
+# Create entrypoint script that handles conda activation and checkpoint validation
+RUN     (echo '#!/bin/bash' \
+    &&   echo '__conda_setup="$(/opt/conda/bin/conda shell.bash hook 2> /dev/null)"' \
+    &&   echo 'eval "$__conda_setup"' \
+    &&   echo 'conda activate "${CONDA_TARGET_ENV:-base}"' \
+    &&   echo '>&2 echo "ENTRYPOINT: CONDA_DEFAULT_ENV=${CONDA_DEFAULT_ENV}"' \
+    &&   echo 'if [ ! -f /opt/checkpoint/sam3.pt ]; then' \
+    &&   echo '  >&2 echo "ERROR: Checkpoint file not found at /opt/checkpoint/sam3.pt"' \
+    &&   echo '  >&2 echo "Please provide the checkpoint file before deployment."' \
+    &&   echo '  >&2 echo "You can mount it as a volume: -v /path/to/sam3.pt:/opt/checkpoint/sam3.pt"' \
+    &&   echo '  >&2 echo "Or copy it into the container: docker cp /path/to/sam3.pt <container_id>:/opt/checkpoint/sam3.pt"' \
+    &&   echo '  exit 1' \
+    &&   echo 'fi' \
+    &&   echo 'export CHECKPOINT_PATH=/opt/checkpoint/sam3.pt' \
+    &&   echo '>&2 echo "Using checkpoint: ${CHECKPOINT_PATH}"' \
+    &&   echo 'ls -lh /opt/checkpoint/sam3.pt' \
+    &&   echo 'cd /home/osml-models' \
+    &&   echo 'exec "$@"'\
+        ) > /entry.sh && chmod +x /entry.sh
+
+# Create non-root user for security
+RUN groupadd -r model && \
+    useradd -r -g model -s /bin/bash model && \
+    chown -R model:model /home/osml-models && \
+    chown -R model:model /opt/checkpoint
+
+USER model
+
+ENTRYPOINT ["/entry.sh", "/bin/bash", "-c", "python3 src/aws/osml/models/${MODEL_SELECTION:-sam3}/app.py"]

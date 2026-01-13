@@ -1,0 +1,108 @@
+# --------------------------------------------------------
+# CDK & TypeScript/JavaScript build outputs
+# --------------------------------------------------------
+build/
+dist/
+node_modules/
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.cache/
+cdk.out/
+cdk-list-output/
+.nyc_output/
+*.tsbuildinfo
+.eslintcache
+*.tmp
+
+# --------------------------------------------------------
+# TypeScript/JavaScript generated files
+# --------------------------------------------------------
+# Compiled JavaScript files (generated from TypeScript)
+# Note: Only ignore .js and .d.ts files in build directories, not source files
+build/**/*.js
+build/**/*.d.ts
+dist/**/*.js
+dist/**/*.d.ts
+lib/**/*.js
+lib/**/*.d.ts
+bin/**/*.js
+bin/**/*.d.ts
+test/**/*.js
+test/**/*.d.ts
+*.js.map
+*.d.ts.map
+
+# Build outputs
+build/
+static/
+
+
+# Package lock files (uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# --------------------------------------------------------
+# IDE and editor files
+# --------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --------------------------------------------------------
+# OS generated files
+# --------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+# --------------------------------------------------------
+# Dependency directories
+# --------------------------------------------------------
+node_modules/
+jspm_packages/
+
+# --------------------------------------------------------
+# Optional npm cache directory
+# --------------------------------------------------------
+.npm
+
+# --------------------------------------------------------
+# Optional eslint cache
+# --------------------------------------------------------
+.eslintcache
+
+# --------------------------------------------------------
+# Output of 'npm pack'
+# --------------------------------------------------------
+*.tgz
+
+
+# --------------------------------------------------------
+# Temporary folders
+# --------------------------------------------------------
+tmp/
+temp/
+
+# --------------------------------------------------------
+# CDK-NAG generated reports
+# --------------------------------------------------------
+cdk-nag-suppressions-report.txt
+.cdk-nag-suppressions-temp.json
+
+# --------------------------------------------------------
+# Deployment configuration (example tracked instead)
+# --------------------------------------------------------
+bin/deployment/deployment.json
+cdk.context.json

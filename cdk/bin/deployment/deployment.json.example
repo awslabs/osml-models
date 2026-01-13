@@ -1,0 +1,19 @@
+{
+  "projectName": "OSML-Models",
+  "account": {
+    "id": "123456789012",
+    "region": "us-west-2",
+    "prodLike": false,
+    "isAdc": false
+  },
+  "modelEndpointConfig": {
+    "BUILD_FROM_SOURCE": true,
+    "CONTAINER_DOCKERFILE": "docker/Dockerfile.sam3",
+    "MODEL_NAME": "sam3",
+    "INSTANCE_TYPE": "ml.g4dn.xlarge"
+  },
+  "deployIntegrationTests": true,
+  "integrationTestConfig": {
+    "BUILD_FROM_SOURCE": true
+  }
+}

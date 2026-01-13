@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2023-2025 Amazon.com, Inc. or its affiliates.
+# Copyright 2023-2026 Amazon.com, Inc. or its affiliates.
 #
 
 # This is a utility script to help building and uploading the OSML default test model to an account's ECR
@@ -23,7 +23,7 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text) || exit 
 aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID".dkr.ecr."$REGION".amazonaws.com
 
 # Build the container locally with Docker
-docker build . -t "$REPO" -f docker/Dockerfile
+docker build . -t "$REPO" -f docker/Dockerfile.sam3
 
 # Tag the model for upload to ECR
 docker tag "$REPO":latest "$ACCOUNT_ID".dkr.ecr."$REGION".amazonaws.com/"$REPO":"$TAG"

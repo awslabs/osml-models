@@ -1,0 +1,17 @@
+# Copyright 2023-2026 Amazon.com, Inc. or its affiliates.
+
+name: osml_model_sam3
+channels:
+  - conda-forge
+dependencies:
+  # GDAL and geospatial libraries (for image processing compatibility with Model Runner)
+  # Updated versions for Python 3.12 compatibility
+  - conda-forge::gdal=3.12.0
+  - conda-forge::proj=9.7.0
+  - conda-forge::openjpeg=2.5.4
+  # GDAL driver packages for format support
+  - conda-forge::libgdal-jp2openjpeg
+  - conda-forge::libgdal-hdf4
+  - conda-forge::libgdal-hdf5
+  - conda-forge::libgdal-netcdf
+  - conda-forge::libgdal-grib
