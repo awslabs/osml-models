@@ -11,6 +11,3 @@ jobs:
   tox:
     uses: ./.github/workflows/tox.yml
     secrets: inherit
-  docker:
-    uses: ./.github/workflows/docker.yml
-    secrets: inherit

@@ -1,11 +1,30 @@
-*~
-*#
-*.swp
-**/*.iml
-**/*.DS_Store
-**/*.tox
-**/*.idea
-**/*venv
+# Ignore everything by default
+*
+
+# Include source code directory
+!src/
+
+# Include conda environment files
+!conda/
+
+# Include assets directory (BPE vocab file)
+!assets/
+
+# Include package configuration files needed for pip install
+!setup.py
+!setup.cfg
+!pyproject.toml
+!MANIFEST.in
+!py.typed
+
+# Include checkpoint file if present (optional, but allow it)
+!sam3.pt
+!*.pt
+
+# Include docker directory (Dockerfile location, though not needed in image)
+!docker/
+
+# But exclude build artifacts and cache files even within included directories
 **/__pycache__/
 **/*.py[cod]
 **/*$py.class
@@ -15,7 +34,19 @@
 **/.cache
 **/.pytest_cache
 **/.mypy_cache
-**/doc/_apidoc/
-**/build
-**/dist
-**/htmlcov
+**/build/
+**/dist/
+**/htmlcov/
+**/.tox/
+**/venv/
+**/.idea/
+**/*.iml
+**/*.DS_Store
+**/*.swp
+**/*~
+**/*#
+**/*.tmp
+**/*.temp
+**/*.bak
+**/*.backup
+**/*.log
