@@ -124,7 +124,7 @@ export class SageMakerRole extends Construct {
       this,
       "SageMakerExecutionPolicy",
       {
-        managedPolicyName: "SageMakerExecutionPolicy",
+        managedPolicyName: `${props.roleName}-ExecutionPolicy`,
       },
     );
 

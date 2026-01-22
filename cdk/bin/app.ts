@@ -58,10 +58,14 @@ function main(): void {
       },
     },
   );
-  const sagemakerRole = new SageMakerRole(sagemakerRoleStack, "SageMakerRole", {
-    account: deployment.account,
-    roleName: `${deployment.projectName}-SageMakerRole`,
-  });
+  const sagemakerRole = new SageMakerRole(
+    sagemakerRoleStack,
+    `${deployment.projectName}-SageMakerRole`,
+    {
+      account: deployment.account,
+      roleName: `${deployment.projectName}-SageMakerRole`,
+    },
+  );
 
   // Instantiate Network Stack
   const networkStack = new NetworkStack(
