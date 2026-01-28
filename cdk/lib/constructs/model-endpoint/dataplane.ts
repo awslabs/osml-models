@@ -65,7 +65,7 @@ export class DataplaneConfig extends BaseConfig {
 
   /**
    * The SageMaker instance type for the endpoint.
-   * @default "ml.g4dn.xlarge"
+   * @default "ml.g5.4xlarge"
    */
   public readonly INSTANCE_TYPE: string;
 
@@ -115,7 +115,7 @@ export class DataplaneConfig extends BaseConfig {
       CONTAINER_URI: "awsosml/osml-models:latest",
       CONTAINER_BUILD_PATH: "..",
       CONTAINER_DOCKERFILE: "docker/Dockerfile.sam3",
-      INSTANCE_TYPE: "ml.g6dn.4xlarge",
+      INSTANCE_TYPE: "ml.g5.4xlarge",
       MODEL_NAME: "sam3",
       INITIAL_INSTANCE_COUNT: 1,
       INITIAL_VARIANT_WEIGHT: 1,

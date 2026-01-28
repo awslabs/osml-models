@@ -84,7 +84,12 @@ LABEL maintainer="Amazon Web Services"
 
 WORKDIR /home
 
-RUN dnf install -y shadow-utils bash && dnf clean all
+# Install bash and configure user and permissions
+RUN dnf install -y \
+        shadow-utils \
+        bash \
+        libxcb \
+    && dnf clean all
 
 # Copy artifacts from build stage
 COPY --from=build /opt/conda /opt/conda
