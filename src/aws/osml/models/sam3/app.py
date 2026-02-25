@@ -42,7 +42,7 @@ logger = build_logger()
 app = build_flask_app(logger)
 
 # Optional ENV configurations
-CONFIDENCE_THRESHOLD = float(os.environ.get("CONFIDENCE_THRESHOLD", "0.6"))
+CONFIDENCE_THRESHOLD = float(os.environ.get("CONFIDENCE_THRESHOLD", "0.1"))
 TEXT_PROMPT = os.environ.get("DEFAULT_TEXT_PROMPT", "objects")
 MODEL_NAME = os.environ.get("MODEL_NAME", "sam3")
 ONTOLOGY_VERSION = os.environ.get("ONTOLOGY_VERSION", "1.0.0")
