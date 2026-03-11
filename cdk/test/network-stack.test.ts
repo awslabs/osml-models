@@ -19,7 +19,7 @@ import {
   createTestApp,
   createTestDeploymentConfig,
   createTestEnvironment,
-  generateNagReport,
+  generateNagReport
 } from "./test-utils";
 
 describe("NetworkStack", () => {
@@ -34,7 +34,7 @@ describe("NetworkStack", () => {
   test("creates stack with new VPC when no VPC provided", () => {
     const stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
-      deployment: deploymentConfig,
+      deployment: deploymentConfig
     });
 
     const template = Template.fromStack(stack);
@@ -49,13 +49,13 @@ describe("NetworkStack", () => {
   test("uses existing VPC when VPC ID provided in deployment config", () => {
     const deploymentWithVpc = createTestDeploymentConfig({
       networkConfig: new NetworkConfig({
-        VPC_ID: "vpc-12345678",
-      }),
+        VPC_ID: "vpc-12345678"
+      })
     });
 
     const stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
-      deployment: deploymentWithVpc,
+      deployment: deploymentWithVpc
     });
 
     expect(stack.network).toBeDefined();
@@ -67,14 +67,14 @@ describe("NetworkStack", () => {
 
   test("uses provided VPC when passed as prop", () => {
     const vpcStack = new Stack(app, "VpcStack", {
-      env: createTestEnvironment(),
+      env: createTestEnvironment()
     });
     const existingVpc = new Vpc(vpcStack, "ExistingVpc");
 
     const stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
       deployment: deploymentConfig,
-      vpc: existingVpc,
+      vpc: existingVpc
     });
 
     expect(stack.network).toBeDefined();
@@ -87,7 +87,7 @@ describe("NetworkStack", () => {
   test("creates network construct with default config when none provided", () => {
     const stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
-      deployment: deploymentConfig,
+      deployment: deploymentConfig
     });
 
     expect(stack.network).toBeDefined();
@@ -97,16 +97,16 @@ describe("NetworkStack", () => {
   test("creates network construct with custom config when provided", () => {
     const customNetworkConfigData = {
       VPC_ID: "vpc-custom123456",
-      TARGET_SUBNETS: ["subnet-12345", "subnet-67890"],
+      TARGET_SUBNETS: ["subnet-12345", "subnet-67890"]
     };
 
     const deploymentWithCustomConfig = createTestDeploymentConfig({
-      networkConfig: new NetworkConfig(customNetworkConfigData),
+      networkConfig: new NetworkConfig(customNetworkConfigData)
     });
 
     const stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
-      deployment: deploymentWithCustomConfig,
+      deployment: deploymentWithCustomConfig
     });
 
     expect(stack.network).toBeDefined();
@@ -118,20 +118,20 @@ describe("NetworkStack", () => {
 
   test("prioritizes provided VPC prop over deployment config VPC ID", () => {
     const vpcStack = new Stack(app, "VpcStack", {
-      env: createTestEnvironment(),
+      env: createTestEnvironment()
     });
     const providedVpc = new Vpc(vpcStack, "ProvidedVpc");
 
     const deploymentWithVpcId = createTestDeploymentConfig({
       networkConfig: new NetworkConfig({
-        VPC_ID: "vpc-from-config",
-      }),
+        VPC_ID: "vpc-from-config"
+      })
     });
 
     const stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
       deployment: deploymentWithVpcId,
-      vpc: providedVpc,
+      vpc: providedVpc
     });
 
     // Should use the provided VPC prop
@@ -141,7 +141,7 @@ describe("NetworkStack", () => {
   test("exports VPC ID and security group ID as CloudFormation outputs", () => {
     const stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
-      deployment: deploymentConfig,
+      deployment: deploymentConfig
     });
 
     const template = Template.fromStack(stack);
@@ -150,18 +150,18 @@ describe("NetworkStack", () => {
     template.hasOutput("VpcId", {
       Export: {
         Name: Match.stringLikeRegexp(
-          `.*${deploymentConfig.projectName}-VpcId.*`,
-        ),
-      },
+          `.*${deploymentConfig.projectName}-VpcId.*`
+        )
+      }
     });
 
     // Should export security group ID
     template.hasOutput("SecurityGroupId", {
       Export: {
         Name: Match.stringLikeRegexp(
-          `.*${deploymentConfig.projectName}-SecurityGroupId.*`,
-        ),
-      },
+          `.*${deploymentConfig.projectName}-SecurityGroupId.*`
+        )
+      }
     });
   });
 });
@@ -177,23 +177,23 @@ describe("cdk-nag Compliance Checks - NetworkStack", () => {
 
     stack = new NetworkStack(app, "TestNetworkStack", {
       env: createTestEnvironment(),
-      deployment: deploymentConfig,
+      deployment: deploymentConfig
     });
 
     // Add the cdk-nag AwsSolutions Pack with extra verbose logging enabled.
     Aspects.of(stack).add(
       new AwsSolutionsChecks({
-        verbose: true,
-      }),
+        verbose: true
+      })
     );
 
     const errors = Annotations.fromStack(stack).findError(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     const warnings = Annotations.fromStack(stack).findWarning(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     generateNagReport(stack, errors, warnings);
   });
@@ -201,7 +201,7 @@ describe("cdk-nag Compliance Checks - NetworkStack", () => {
   test("No unsuppressed Warnings", () => {
     const warnings = Annotations.fromStack(stack).findWarning(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     expect(warnings).toHaveLength(0);
   });
@@ -209,7 +209,7 @@ describe("cdk-nag Compliance Checks - NetworkStack", () => {
   test("No unsuppressed Errors", () => {
     const errors = Annotations.fromStack(stack).findError(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     expect(errors).toHaveLength(0);
   });

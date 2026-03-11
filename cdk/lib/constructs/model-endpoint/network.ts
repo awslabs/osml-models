@@ -12,7 +12,7 @@ import {
   SubnetFilter,
   SubnetSelection,
   SubnetType,
-  Vpc,
+  Vpc
 } from "aws-cdk-lib/aws-ec2";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { Construct } from "constructs";
@@ -61,7 +61,7 @@ export class NetworkConfig extends BaseConfig {
       // Set default values here
       VPC_NAME: "osml-models-vpc",
       SECURITY_GROUP_NAME: "osml-models-security-group",
-      ...config,
+      ...config
     });
   }
 }
@@ -140,12 +140,12 @@ export class Network extends Construct {
     // If specified subnets are provided, use them
     if (this.config.TARGET_SUBNETS) {
       return this.vpc.selectSubnets({
-        subnetFilters: [SubnetFilter.byIds(this.config.TARGET_SUBNETS)],
+        subnetFilters: [SubnetFilter.byIds(this.config.TARGET_SUBNETS)]
       });
     } else {
       // Otherwise, select all private subnets
       return this.vpc.selectSubnets({
-        subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+        subnetType: SubnetType.PRIVATE_WITH_EGRESS
       });
     }
   }
@@ -169,7 +169,7 @@ export class Network extends Construct {
       // Import existing VPC
       return Vpc.fromLookup(this, "ImportedVPC", {
         vpcId: this.config.VPC_ID,
-        isDefault: false,
+        isDefault: false
       });
     } else {
       const regionConfig = RegionalConfig.getConfig(props.account.region);
@@ -182,14 +182,14 @@ export class Network extends Construct {
           {
             cidrMask: 24,
             name: `${this.config.VPC_NAME}-Public`,
-            subnetType: SubnetType.PUBLIC,
+            subnetType: SubnetType.PUBLIC
           },
           {
             cidrMask: 24,
             name: `${this.config.VPC_NAME}-Private`,
-            subnetType: SubnetType.PRIVATE_WITH_EGRESS,
-          },
-        ],
+            subnetType: SubnetType.PRIVATE_WITH_EGRESS
+          }
+        ]
       });
 
       // Add VPC Flow Logs for compliance (required by AwsSolutions-VPC7)
@@ -200,12 +200,12 @@ export class Network extends Construct {
           : RetentionDays.ONE_WEEK,
         removalPolicy: props.account.prodLike
           ? RemovalPolicy.RETAIN
-          : RemovalPolicy.DESTROY,
+          : RemovalPolicy.DESTROY
       });
 
       vpc.addFlowLog("VPCFlowLog", {
         destination: FlowLogDestination.toCloudWatchLogs(flowLogGroup),
-        trafficType: FlowLogTrafficType.ALL,
+        trafficType: FlowLogTrafficType.ALL
       });
 
       return vpc;
@@ -225,7 +225,7 @@ export class Network extends Construct {
       return SecurityGroup.fromSecurityGroupId(
         this,
         "ImportedSecurityGroup",
-        this.config.SECURITY_GROUP_ID,
+        this.config.SECURITY_GROUP_ID
       );
     } else {
       // Create new security group with outbound access
@@ -233,7 +233,7 @@ export class Network extends Construct {
         securityGroupName: this.config.SECURITY_GROUP_NAME,
         vpc: this.vpc,
         description: "Security group for OSML Models resources",
-        allowAllOutbound: true,
+        allowAllOutbound: true
       });
 
       return sg;

@@ -5,7 +5,7 @@
 import {
   ContainerImage as SageMakerContainerImage,
   ContainerImageConfig,
-  Model,
+  Model
 } from "@aws-cdk/aws-sagemaker-alpha";
 import { DockerImageAsset, Platform } from "aws-cdk-lib/aws-ecr-assets";
 import { ContainerImage } from "aws-cdk-lib/aws-ecs";
@@ -28,7 +28,7 @@ class RegistryContainerImage extends SageMakerContainerImage {
     void scope;
     void model;
     return {
-      imageName: this.imageUri,
+      imageName: this.imageUri
     };
   }
 }
@@ -154,8 +154,8 @@ export class OSMLContainer extends Construct {
           file: props.config.CONTAINER_DOCKERFILE,
           target: props.config.CONTAINER_BUILD_TARGET,
           buildArgs: props.config.CONTAINER_BUILD_ARGS,
-          platform: Platform.LINUX_AMD64,
-        },
+          platform: Platform.LINUX_AMD64
+        }
       );
 
       // Also create DockerImageAsset for ECS compatibility (if needed elsewhere)
@@ -164,12 +164,12 @@ export class OSMLContainer extends Construct {
         file: props.config.CONTAINER_DOCKERFILE,
         target: props.config.CONTAINER_BUILD_TARGET,
         buildArgs: props.config.CONTAINER_BUILD_ARGS,
-        platform: Platform.LINUX_AMD64,
+        platform: Platform.LINUX_AMD64
       });
 
       // ECS ContainerImage (for legacy compatibility)
       this.containerImage = ContainerImage.fromDockerImageAsset(
-        this.dockerImageAsset,
+        this.dockerImageAsset
       );
       this.containerUri = this.dockerImageAsset.imageUri;
       this.repositoryAccessMode = "Platform";
@@ -177,12 +177,12 @@ export class OSMLContainer extends Construct {
       // Pull container image from registry
       // ECS ContainerImage (for legacy compatibility)
       this.containerImage = ContainerImage.fromRegistry(
-        props.config.CONTAINER_URI,
+        props.config.CONTAINER_URI
       );
       // SageMaker ContainerImage (for L2 constructs)
       // Use custom RegistryContainerImage since SageMaker alpha doesn't support fromRegistry
       this.sagemakerContainerImage = new RegistryContainerImage(
-        props.config.CONTAINER_URI,
+        props.config.CONTAINER_URI
       );
       this.containerUri = props.config.CONTAINER_URI;
       this.repositoryAccessMode = "Platform";

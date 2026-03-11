@@ -1,0 +1,97 @@
+# Copyright 2026 Amazon.com, Inc. or its affiliates.
+
+name: Validate
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+
+env:
+  AWS_REGION: "us-west-2"
+  AWS_PAGER: ""
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    uses: ./.github/workflows/check-pending-workflow.yml
+    secrets: inherit
+
+  get-aws-region:
+    runs-on: ubuntu-latest
+    outputs:
+      aws_region: ${{ env.AWS_REGION }}
+    steps:
+      - name: Set AWS Region
+        run: |
+          echo "Using AWS Region: ${{ env.AWS_REGION }}"
+
+  lint:
+    needs: check
+    uses: ./.github/workflows/pre-commit.yml
+    secrets: inherit
+
+  test:
+    needs: check
+    uses: ./.github/workflows/tox.yml
+    secrets: inherit
+
+  deploy:
+    needs:
+      - check
+      - lint
+      - test
+      - get-aws-region
+    uses: ./.github/workflows/deploy.yml
+    with:
+      aws_region: ${{ needs.get-aws-region.outputs.aws_region }}
+      build_from_source: true
+      deploy_integration_tests: true
+    secrets: inherit
+
+  integration-test:
+    needs:
+      - deploy
+      - get-aws-region
+    uses: ./.github/workflows/run-integration-tests.yml
+    with:
+      aws_region: ${{ needs.get-aws-region.outputs.aws_region }}
+    secrets: inherit
+
+  destroy:
+    if: always()
+    needs:
+      - check
+      - deploy
+      - integration-test
+      - get-aws-region
+    uses: ./.github/workflows/destroy.yml
+    with:
+      aws_region: ${{ needs.get-aws-region.outputs.aws_region }}
+    secrets: inherit
+
+  notify-nightly-failure:
+    if: failure() && github.event_name == 'schedule'
+    needs:
+      - check
+      - lint
+      - test
+      - deploy
+      - integration-test
+      - destroy
+      - get-aws-region
+    uses: ./.github/workflows/slack-notify-nightly-failure.yml
+    with:
+      run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    secrets: inherit

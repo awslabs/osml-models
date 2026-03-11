@@ -10,6 +10,9 @@
  * - Deployment of test images from local assets
  * - Lambda function for running integration tests
  * - IAM role with necessary permissions
+ *
+ * This stack is decoupled from the Dataplane stack to allow parallel destruction.
+ * The SageMaker endpoint name is resolved at runtime via an SSM parameter.
  */
 
 import { Environment, Stack, StackProps } from "aws-cdk-lib";
@@ -19,18 +22,9 @@ import { NagSuppressions } from "cdk-nag";
 import { Construct } from "constructs";
 
 import { DeploymentConfig } from "../bin/deployment/load-deployment";
-import { MESageMakerEndpoint } from "./constructs/model-endpoint/sagemaker-endpoint";
 import { TestImagery, TestImageryConfig } from "./constructs/test/imagery";
 import { LambdaRole } from "./constructs/test/lambda-roles";
 import { Test, TestConfig } from "./constructs/test/test";
-
-/**
- * Model endpoint resources required by the Integration Test Stack.
- */
-export interface ModelEndpointResources {
-  /** The model SageMaker endpoint. */
-  modelEndpoint: MESageMakerEndpoint;
-}
 
 /**
  * Properties for the Integration Test Stack.
@@ -51,15 +45,15 @@ export interface IntegrationTestStackProps extends StackProps {
   /** Security group for the integration test resources. */
   securityGroup: ISecurityGroup;
 
-  /** Model endpoint resources from the Model Endpoint Stack. */
-  modelEndpoint: ModelEndpointResources;
-
   /** Optional existing Lambda role to use. */
   existingLambdaRole?: IRole;
 }
 
 /**
  * Stack for deploying integration test resources.
+ *
+ * Decoupled from the Dataplane stack — the Lambda resolves the SageMaker
+ * endpoint name at runtime via SSM parameter `/{projectName}/endpoint-name`.
  */
 export class IntegrationTestStack extends Stack {
   /** The test imagery construct. */
@@ -85,10 +79,13 @@ export class IntegrationTestStack extends Stack {
 
     this.deployment = props.deployment;
 
+    // SSM parameter name for the endpoint (written by the Dataplane stack)
+    const endpointSsmParamName = `/${props.deployment.projectName}/endpoint-name`;
+
     // Create the test imagery construct
     const testImageryConfig = this.deployment.integrationTestConfig
       ? new TestImageryConfig(
-          this.deployment.integrationTestConfig as Record<string, unknown>,
+          this.deployment.integrationTestConfig as Record<string, unknown>
         )
       : new TestImageryConfig();
 
@@ -97,10 +94,10 @@ export class IntegrationTestStack extends Stack {
         id: props.deployment.account.id,
         region: props.deployment.account.region,
         prodLike: props.deployment.account.prodLike,
-        isAdc: props.deployment.account.isAdc,
+        isAdc: props.deployment.account.isAdc
       },
       vpc: props.vpc,
-      config: testImageryConfig,
+      config: testImageryConfig
     });
 
     // Create Lambda role construct
@@ -109,20 +106,19 @@ export class IntegrationTestStack extends Stack {
         id: props.deployment.account.id,
         region: props.deployment.account.region,
         prodLike: props.deployment.account.prodLike,
-        isAdc: props.deployment.account.isAdc,
+        isAdc: props.deployment.account.isAdc
       },
       roleName: `${props.deployment.projectName}-integration-test-role`,
       existingLambdaRole: props.existingLambdaRole,
-      endpointName:
-        props.modelEndpoint.modelEndpoint.endpoint.endpointName || "",
       testBucketArn: this.testImagery.imageBucket.bucketArn,
       projectName: props.deployment.projectName,
+      endpointSsmParamName
     });
 
     // Create test Lambda function construct
     const testConfig = this.deployment.integrationTestConfig
       ? new TestConfig(
-          this.deployment.integrationTestConfig as Record<string, unknown>,
+          this.deployment.integrationTestConfig as Record<string, unknown>
         )
       : new TestConfig();
 
@@ -131,15 +127,14 @@ export class IntegrationTestStack extends Stack {
         id: props.deployment.account.id,
         region: props.deployment.account.region,
         prodLike: props.deployment.account.prodLike,
-        isAdc: props.deployment.account.isAdc,
+        isAdc: props.deployment.account.isAdc
       },
       vpc: props.vpc,
       lambdaRole: this.role.lambdaRole,
       securityGroup: props.securityGroup,
-      endpointName:
-        props.modelEndpoint.modelEndpoint.endpoint.endpointName || "",
+      endpointSsmParamName,
       projectName: props.deployment.projectName,
-      config: testConfig,
+      config: testConfig
     });
 
     // Suppress CloudWatch Logs wildcard at stack level
@@ -149,17 +144,18 @@ export class IntegrationTestStack extends Stack {
         reason:
           "CloudWatch Logs permissions require wildcard for log stream names which are dynamically generated. " +
           "The log group is scoped to the specific Lambda function. " +
-          "S3 bucket permissions include wildcard for object access which is required for test image retrieval.",
+          "S3 bucket permissions include wildcard for object access which is required for test image retrieval. " +
+          "SageMaker endpoint permissions use wildcard because the endpoint name is resolved at runtime via SSM.",
         appliesTo: [
           {
             regex:
-              "/^Resource::arn:aws:logs:.*:.*:log-group:/aws/lambda/.*:\\*$/",
+              "/^Resource::arn:aws:logs:.*:.*:log-group:/aws/lambda/.*:\\*$/"
           },
           {
-            regex: "/^Resource::<TestImageryTestImageryBucket.*\\.Arn>/\\*$/",
-          },
-        ],
-      },
+            regex: "/^Resource::<TestImageryTestImageryBucket.*\\.Arn>/\\*$/"
+          }
+        ]
+      }
     ]);
   }
 }

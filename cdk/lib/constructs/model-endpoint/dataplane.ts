@@ -8,7 +8,7 @@ import {
   ISecurityGroup,
   IVpc,
   SecurityGroup,
-  SubnetSelection,
+  SubnetSelection
 } from "aws-cdk-lib/aws-ec2";
 import { IRole } from "aws-cdk-lib/aws-iam";
 import { NagSuppressions } from "cdk-nag";
@@ -18,7 +18,7 @@ import { BaseConfig, ConfigType, OSMLAccount } from "../types";
 import { ContainerConfig, OSMLContainer } from "./container";
 import {
   MESageMakerEndpoint,
-  SageMakerEndpointConfig,
+  SageMakerEndpointConfig
 } from "./sagemaker-endpoint";
 
 /**
@@ -120,7 +120,7 @@ export class DataplaneConfig extends BaseConfig {
       INITIAL_INSTANCE_COUNT: 1,
       INITIAL_VARIANT_WEIGHT: 1,
       VARIANT_NAME: "AllTraffic",
-      ...config,
+      ...config
     };
     super(mergedConfig);
 
@@ -280,18 +280,18 @@ export class Dataplane extends Construct {
               "AWS managed policies are used for CDK custom resource Lambda execution roles. " +
               "These are required for CDK asset management and cannot be replaced with custom policies.",
             appliesTo: [
-              "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-            ],
+              "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+            ]
           },
           {
             id: "AwsSolutions-L1",
             reason:
               "Lambda runtime versions are managed by CDK for custom resources. " +
               "These Lambda functions are created by CDK for asset management and " +
-              "their runtime versions are controlled by the CDK framework version.",
-          },
+              "their runtime versions are controlled by the CDK framework version."
+          }
         ],
-        true,
+        true
       );
     }
   }
@@ -308,17 +308,17 @@ export class Dataplane extends Construct {
       CONTAINER_BUILD_PATH: this.config.CONTAINER_BUILD_PATH,
       CONTAINER_BUILD_TARGET: this.config.CONTAINER_BUILD_TARGET,
       CONTAINER_DOCKERFILE: this.config.CONTAINER_DOCKERFILE,
-      CONTAINER_BUILD_ARGS: this.config.CONTAINER_BUILD_ARGS,
+      CONTAINER_BUILD_ARGS: this.config.CONTAINER_BUILD_ARGS
     });
 
     return new OSMLContainer(this, "Container", {
       account: {
         id: props.account.id,
         region: props.account.region,
-        prodLike: props.account.prodLike,
+        prodLike: props.account.prodLike
       },
       buildFromSource: this.config.BUILD_FROM_SOURCE,
-      config: containerConfig,
+      config: containerConfig
     });
   }
 
@@ -340,9 +340,9 @@ export class Dataplane extends Construct {
       VARIANT_NAME: this.config.VARIANT_NAME,
       SECURITY_GROUP_ID: this.securityGroup?.securityGroupId ?? "",
       CONTAINER_ENV: {
-        MODEL_SELECTION: this.config.MODEL_NAME,
+        MODEL_SELECTION: this.config.MODEL_NAME
       },
-      REPOSITORY_ACCESS_MODE: this.container.repositoryAccessMode,
+      REPOSITORY_ACCESS_MODE: this.container.repositoryAccessMode
     });
 
     // Convert instance type string to InstanceType
@@ -356,7 +356,7 @@ export class Dataplane extends Construct {
       vpc: props.vpc,
       subnetSelection: props.subnetSelection,
       securityGroups: this.securityGroup ? [this.securityGroup] : undefined,
-      config: endpointConfig,
+      config: endpointConfig
     });
 
     // Ensure the SageMaker model depends on the role's policy being attached
@@ -382,7 +382,7 @@ export class Dataplane extends Construct {
       return props.config;
     }
     return new DataplaneConfig(
-      (props.config as unknown as Partial<ConfigType>) ?? {},
+      (props.config as unknown as Partial<ConfigType>) ?? {}
     );
   }
 
@@ -405,13 +405,13 @@ export class Dataplane extends Construct {
    * @returns The security group or undefined
    */
   private initializeSecurityGroup(
-    props: DataplaneProps,
+    props: DataplaneProps
   ): ISecurityGroup | undefined {
     if (this.config.SECURITY_GROUP_ID) {
       return SecurityGroup.fromSecurityGroupId(
         this,
         "ImportedSecurityGroup",
-        this.config.SECURITY_GROUP_ID,
+        this.config.SECURITY_GROUP_ID
       );
     }
     return props.securityGroup;

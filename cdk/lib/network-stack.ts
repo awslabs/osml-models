@@ -67,24 +67,24 @@ export class NetworkStack extends Stack {
         id: deployment.account.id,
         region: deployment.account.region,
         prodLike: deployment.account.prodLike,
-        isAdc: deployment.account.isAdc,
+        isAdc: deployment.account.isAdc
       },
       config: networkConfig,
-      vpc: props.vpc,
+      vpc: props.vpc
     });
 
     // Export VPC ID
     new CfnOutput(this, "VpcId", {
       value: this.network.vpc.vpcId,
       description: "VPC ID",
-      exportName: `${deployment.projectName}-VpcId`,
+      exportName: `${deployment.projectName}-VpcId`
     });
 
     // Export security group ID
     new CfnOutput(this, "SecurityGroupId", {
       value: this.network.securityGroup.securityGroupId,
       description: "Security Group ID",
-      exportName: `${deployment.projectName}-SecurityGroupId`,
+      exportName: `${deployment.projectName}-SecurityGroupId`
     });
   }
 }

@@ -1,0 +1,40 @@
+# Copyright 2026 Amazon.com, Inc. or its affiliates.
+
+name: Run Integration Tests
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+    secrets:
+      MODELS_ACCOUNT_ID:
+        required: true
+
+env:
+  AWS_REGION: ${{ inputs.aws_region }}
+  AWS_PAGER: ""
+
+jobs:
+  run-integration-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Setup AWS OIDC
+        uses: ./.github/actions/setup-aws-oidc
+        with:
+          aws_region: ${{ inputs.aws_region }}
+          account_id: ${{ secrets.MODELS_ACCOUNT_ID }}
+          role_duration_seconds: '7200'
+      - name: Run integration tests
+        env:
+          AWS_REGION: ${{ inputs.aws_region }}
+        run: |
+          bash scripts/model_endpoint_integ.sh

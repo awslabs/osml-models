@@ -9,7 +9,7 @@ import {
   ManagedPolicy,
   PolicyStatement,
   Role,
-  ServicePrincipal,
+  ServicePrincipal
 } from "aws-cdk-lib/aws-iam";
 import { NagSuppressions } from "cdk-nag";
 import { Construct } from "constructs";
@@ -32,7 +32,7 @@ export class SageMakerRoleConfig extends BaseConfig {
    */
   constructor(config: ConfigType = {}) {
     super({
-      ...config,
+      ...config
     });
   }
 }
@@ -83,7 +83,7 @@ export class SageMakerRole extends Construct {
     // Determine the AWS partition based on the provided AWS region
     this.partition = region_info.Fact.find(
       props.account.region,
-      region_info.FactName.PARTITION,
+      region_info.FactName.PARTITION
     )!;
 
     // Determine which role to use
@@ -94,8 +94,8 @@ export class SageMakerRole extends Construct {
         "ImportedSageMakerRole",
         this.config.SM_ROLE_NAME,
         {
-          mutable: false,
-        },
+          mutable: false
+        }
       );
     } else if (props.existingRole) {
       // Use provided existing role
@@ -117,15 +117,15 @@ export class SageMakerRole extends Construct {
       roleName: props.roleName,
       assumedBy: new ServicePrincipal("sagemaker.amazonaws.com"),
       description:
-        "Allows SageMaker to access necessary AWS services (S3, SQS, DynamoDB, ...)",
+        "Allows SageMaker to access necessary AWS services (S3, SQS, DynamoDB, ...)"
     });
 
     const smExecutionPolicy = new ManagedPolicy(
       this,
       "SageMakerExecutionPolicy",
       {
-        managedPolicyName: `${props.roleName}-ExecutionPolicy`,
-      },
+        managedPolicyName: `${props.roleName}-ExecutionPolicy`
+      }
     );
 
     // Add permissions to describe EC2 instance types
@@ -142,16 +142,16 @@ export class SageMakerRole extends Construct {
         "ec2:DeleteNetworkInterfacePermission",
         "ec2:DeleteNetworkInterface",
         "ec2:CreateNetworkInterfacePermission",
-        "ec2:CreateNetworkInterface",
+        "ec2:CreateNetworkInterface"
       ],
-      resources: ["*"],
+      resources: ["*"]
     });
 
     // Add permissions for ECR permissions
     const ecrAuthPolicyStatement = new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ["ecr:GetAuthorizationToken"],
-      resources: ["*"],
+      resources: ["*"]
     });
 
     const ecrPolicyStatement = new PolicyStatement({
@@ -165,11 +165,11 @@ export class SageMakerRole extends Construct {
         "ecr:UploadLayerPart",
         "ecr:CompleteLayerUpload",
         "ecr:PutImage",
-        "ecr:DescribeRepositories",
+        "ecr:DescribeRepositories"
       ],
       resources: [
-        `arn:${this.partition}:ecr:${props.account.region}:${props.account.id}:repository/*`,
-      ],
+        `arn:${this.partition}:ecr:${props.account.region}:${props.account.id}:repository/*`
+      ]
     });
 
     // Add permissions for cloudwatch permissions
@@ -189,18 +189,18 @@ export class SageMakerRole extends Construct {
         "logs:ListLogDeliveries",
         "logs:PutLogEvents",
         "logs:PutResourcePolicy",
-        "logs:UpdateLogDelivery",
+        "logs:UpdateLogDelivery"
       ],
       resources: [
-        `arn:${this.partition}:logs:${props.account.region}:${props.account.id}:log-group:*`,
-      ],
+        `arn:${this.partition}:logs:${props.account.region}:${props.account.id}:log-group:*`
+      ]
     });
 
     // Add permissions to assume roles
     const stsPolicyStatement = new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ["sts:AssumeRole"],
-      resources: ["*"],
+      resources: ["*"]
     });
 
     smExecutionPolicy.addStatements(
@@ -208,7 +208,7 @@ export class SageMakerRole extends Construct {
       ecrAuthPolicyStatement,
       ecrPolicyStatement,
       ec2NetworkPolicyStatement,
-      stsPolicyStatement,
+      stsPolicyStatement
     );
 
     role.addManagedPolicy(smExecutionPolicy);
@@ -221,38 +221,38 @@ export class SageMakerRole extends Construct {
           id: "AwsSolutions-IAM5",
           reason:
             "EC2 network interface actions require wildcard resource for VPC endpoint creation and management",
-          appliesTo: ["Resource::*"],
+          appliesTo: ["Resource::*"]
         },
         {
           id: "AwsSolutions-IAM5",
           reason:
             "ecr:GetAuthorizationToken requires wildcard resource per AWS documentation",
-          appliesTo: ["Resource::*"],
+          appliesTo: ["Resource::*"]
         },
         {
           id: "AwsSolutions-IAM5",
           reason:
             "sts:AssumeRole requires wildcard resource for cross-account and dynamic role assumption scenarios",
-          appliesTo: ["Resource::*"],
+          appliesTo: ["Resource::*"]
         },
         {
           id: "AwsSolutions-IAM5",
           reason:
             "ECR repository wildcard policy allows access to any repository in the account, needed for flexible model container deployment",
           appliesTo: [
-            `Resource::arn:aws:ecr:${props.account.region}:${props.account.id}:repository/*`,
-          ],
+            `Resource::arn:aws:ecr:${props.account.region}:${props.account.id}:repository/*`
+          ]
         },
         {
           id: "AwsSolutions-IAM5",
           reason:
             "CloudWatch Logs log-group wildcard allows access to log groups created dynamically by SageMaker endpoints",
           appliesTo: [
-            `Resource::arn:aws:logs:${props.account.region}:${props.account.id}:log-group:*`,
-          ],
-        },
+            `Resource::arn:aws:logs:${props.account.region}:${props.account.id}:log-group:*`
+          ]
+        }
       ],
-      true,
+      true
     );
 
     return role;
