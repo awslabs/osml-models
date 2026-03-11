@@ -61,7 +61,7 @@ export class DeploymentConfigError extends Error {
   constructor(
     message: string,
     // eslint-disable-next-line no-unused-vars
-    public field?: string,
+    public field?: string
   ) {
     super(message);
     this.name = "DeploymentConfigError";
@@ -80,13 +80,13 @@ export class DeploymentConfigError extends Error {
 export function validateStringField(
   value: unknown,
   fieldName: string,
-  isRequired: boolean = true,
+  isRequired: boolean = true
 ): string {
   if (value === undefined || value === null) {
     if (isRequired) {
       throw new DeploymentConfigError(
         `Missing required field: ${fieldName}`,
-        fieldName,
+        fieldName
       );
     }
     return "";
@@ -95,7 +95,7 @@ export function validateStringField(
   if (typeof value !== "string") {
     throw new DeploymentConfigError(
       `Field '${fieldName}' must be a string, got ${typeof value}`,
-      fieldName,
+      fieldName
     );
   }
 
@@ -103,7 +103,7 @@ export function validateStringField(
   if (isRequired && trimmed === "") {
     throw new DeploymentConfigError(
       `Field '${fieldName}' cannot be empty or contain only whitespace`,
-      fieldName,
+      fieldName
     );
   }
 
@@ -121,7 +121,7 @@ export function validateAccountId(accountId: string): string {
   if (!/^\d{12}$/.test(accountId)) {
     throw new DeploymentConfigError(
       `Invalid AWS account ID format: '${accountId}'. Must be exactly 12 digits.`,
-      "account.id",
+      "account.id"
     );
   }
   return accountId;
@@ -139,7 +139,7 @@ export function validateRegion(region: string): string {
   if (!/^[a-z0-9]+-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(region)) {
     throw new DeploymentConfigError(
       `Invalid AWS region format: '${region}'. Must follow pattern like 'us-east-1', 'eu-west-2', etc.`,
-      "account.region",
+      "account.region"
     );
   }
   return region;
@@ -156,7 +156,7 @@ export function validateVpcId(vpcId: string): string {
   if (!/^vpc-[a-f0-9]{8}(?:[a-f0-9]{9})?$/.test(vpcId)) {
     throw new DeploymentConfigError(
       `Invalid VPC ID format: '${vpcId}'. Must start with 'vpc-' followed by 8 or 17 hexadecimal characters.`,
-      "networkConfig.VPC_ID",
+      "networkConfig.VPC_ID"
     );
   }
   return vpcId;
@@ -173,7 +173,7 @@ export function validateSecurityGroupId(securityGroupId: string): string {
   if (!/^sg-[a-f0-9]{8}(?:[a-f0-9]{9})?$/.test(securityGroupId)) {
     throw new DeploymentConfigError(
       `Invalid security group ID format: '${securityGroupId}'. Must start with 'sg-' followed by 8 or 17 hexadecimal characters.`,
-      "networkConfig.SECURITY_GROUP_ID",
+      "networkConfig.SECURITY_GROUP_ID"
     );
   }
   return securityGroupId;
@@ -190,7 +190,7 @@ export function loadDeploymentConfig(): DeploymentConfig {
 
   if (!existsSync(deploymentPath)) {
     throw new DeploymentConfigError(
-      `Missing deployment.json file at ${deploymentPath}. Please create it by copying deployment.json.example`,
+      `Missing deployment.json file at ${deploymentPath}. Please create it by copying deployment.json.example`
     );
   }
 
@@ -201,18 +201,18 @@ export function loadDeploymentConfig(): DeploymentConfig {
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new DeploymentConfigError(
-        `Invalid JSON format in deployment.json: ${error.message}`,
+        `Invalid JSON format in deployment.json: ${error.message}`
       );
     }
     throw new DeploymentConfigError(
-      `Failed to read deployment.json: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Failed to read deployment.json: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 
   // Validate top-level structure
   if (!parsed || typeof parsed !== "object" || parsed === null) {
     throw new DeploymentConfigError(
-      "deployment.json must contain a valid JSON object",
+      "deployment.json must contain a valid JSON object"
     );
   }
 
@@ -228,17 +228,17 @@ export function loadDeploymentConfig(): DeploymentConfig {
   if (!parsedObj.account || typeof parsedObj.account !== "object") {
     throw new DeploymentConfigError(
       "Missing or invalid account section in deployment.json",
-      "account",
+      "account"
     );
   }
 
   const accountObj = parsedObj.account as Record<string, unknown>;
 
   const accountId = validateAccountId(
-    validateStringField(accountObj.id, "account.id"),
+    validateStringField(accountObj.id, "account.id")
   );
   const region = validateRegion(
-    validateStringField(accountObj.region, "account.region"),
+    validateStringField(accountObj.region, "account.region")
   );
 
   // Parse optional Network configuration
@@ -256,7 +256,7 @@ export function loadDeploymentConfig(): DeploymentConfig {
     // Validate VPC_ID format if provided
     if (networkConfigData.VPC_ID !== undefined) {
       validateVpcId(
-        validateStringField(networkConfigData.VPC_ID, "networkConfig.VPC_ID"),
+        validateStringField(networkConfigData.VPC_ID, "networkConfig.VPC_ID")
       );
     }
 
@@ -265,7 +265,7 @@ export function loadDeploymentConfig(): DeploymentConfig {
       if (!Array.isArray(networkConfigData.TARGET_SUBNETS)) {
         throw new DeploymentConfigError(
           "Field 'networkConfig.TARGET_SUBNETS' must be an array",
-          "networkConfig.TARGET_SUBNETS",
+          "networkConfig.TARGET_SUBNETS"
         );
       }
     }
@@ -275,8 +275,8 @@ export function loadDeploymentConfig(): DeploymentConfig {
       validateSecurityGroupId(
         validateStringField(
           networkConfigData.SECURITY_GROUP_ID,
-          "networkConfig.SECURITY_GROUP_ID",
-        ),
+          "networkConfig.SECURITY_GROUP_ID"
+        )
       );
     }
 
@@ -289,7 +289,7 @@ export function loadDeploymentConfig(): DeploymentConfig {
     ) {
       throw new DeploymentConfigError(
         "When VPC_ID is provided, TARGET_SUBNETS must also be specified with at least one subnet ID",
-        "networkConfig.TARGET_SUBNETS",
+        "networkConfig.TARGET_SUBNETS"
       );
     }
 
@@ -339,19 +339,19 @@ export function loadDeploymentConfig(): DeploymentConfig {
       id: accountId,
       region: region,
       prodLike: (accountObj.prodLike as boolean | undefined) ?? false,
-      isAdc: (accountObj.isAdc as boolean | undefined) ?? false,
+      isAdc: (accountObj.isAdc as boolean | undefined) ?? false
     },
     networkConfig,
     modelEndpointConfig,
     deployIntegrationTests,
-    integrationTestConfig,
+    integrationTestConfig
   };
 
   // Only log non-sensitive configuration details (prevent duplicate logging)
   const globalObj = global as { __deploymentConfigLoaded?: boolean };
   if (!globalObj.__deploymentConfigLoaded) {
     console.log(
-      `Using environment from deployment.json: projectName=${validatedConfig.projectName}, region=${validatedConfig.account.region}`,
+      `Using environment from deployment.json: projectName=${validatedConfig.projectName}, region=${validatedConfig.account.region}`
     );
     globalObj.__deploymentConfigLoaded = true;
   }

@@ -84,18 +84,20 @@ LABEL maintainer="Amazon Web Services"
 
 WORKDIR /home
 
-# Install bash and configure user and permissions
+# Install runtime dependencies and create non-root user
 RUN dnf install -y \
         shadow-utils \
         bash \
         libxcb \
-    && dnf clean all
+    && dnf clean all \
+    && groupadd -r model \
+    && useradd -r -g model -s /bin/bash model
 
-# Copy artifacts from build stage
+# Copy artifacts from build stage (--chown avoids a duplicate layer from chown -R)
 COPY --from=build /opt/conda /opt/conda
 RUN ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh
-COPY --from=build /home/osml-models /home/osml-models
-COPY --from=build /opt/checkpoint /opt/checkpoint
+COPY --from=build --chown=model:model /home/osml-models /home/osml-models
+COPY --from=build --chown=model:model /opt/checkpoint /opt/checkpoint
 
 # Configure runtime environment
 ENV CONDA_TARGET_ENV=osml_model_sam3
@@ -130,12 +132,6 @@ RUN     (echo '#!/bin/bash' \
     &&   echo 'cd /home/osml-models' \
     &&   echo 'exec "$@"'\
         ) > /entry.sh && chmod +x /entry.sh
-
-# Create non-root user for security
-RUN groupadd -r model && \
-    useradd -r -g model -s /bin/bash model && \
-    chown -R model:model /home/osml-models && \
-    chown -R model:model /opt/checkpoint
 
 USER model
 

@@ -24,6 +24,9 @@
 # Include docker directory (Dockerfile location, though not needed in image)
 !docker/
 
+# Include test directory (needed for integration test container)
+!test/
+
 # But exclude build artifacts and cache files even within included directories
 **/__pycache__/
 **/*.py[cod]

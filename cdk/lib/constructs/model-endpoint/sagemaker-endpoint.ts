@@ -7,7 +7,7 @@ import {
   Endpoint,
   EndpointConfig,
   InstanceType,
-  Model,
+  Model
 } from "@aws-cdk/aws-sagemaker-alpha";
 import { ISecurityGroup, IVpc, SubnetSelection } from "aws-cdk-lib/aws-ec2";
 import { IRole } from "aws-cdk-lib/aws-iam";
@@ -133,13 +133,13 @@ export class MESageMakerEndpoint extends Construct {
       containers: [
         {
           image: props.containerImage,
-          environment: config.CONTAINER_ENV,
-        },
+          environment: config.CONTAINER_ENV
+        }
       ],
       role: props.role,
       vpc: props.vpc,
       vpcSubnets: props.subnetSelection,
-      securityGroups: props.securityGroups,
+      securityGroups: props.securityGroups
     });
 
     // Create EndpointConfig using L2 construct
@@ -151,9 +151,9 @@ export class MESageMakerEndpoint extends Construct {
           variantName: config.VARIANT_NAME,
           initialVariantWeight: config.INITIAL_VARIANT_WEIGHT,
           instanceType: props.instanceType,
-          initialInstanceCount: config.INITIAL_INSTANCE_COUNT,
-        },
-      ],
+          initialInstanceCount: config.INITIAL_INSTANCE_COUNT
+        }
+      ]
     });
 
     // Create Endpoint using L2 construct
@@ -162,7 +162,7 @@ export class MESageMakerEndpoint extends Construct {
 
     this.endpoint = new Endpoint(this, "Endpoint", {
       endpointName: endpointName,
-      endpointConfig: this.endpointConfig,
+      endpointConfig: this.endpointConfig
     });
   }
 }

@@ -1,0 +1,62 @@
+# Copyright 2026 Amazon.com, Inc. or its affiliates.
+
+name: Destroy Infrastructure
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+    secrets:
+      MODELS_ACCOUNT_ID:
+        required: true
+
+env:
+  AWS_REGION: ${{ inputs.aws_region }}
+  AWS_PAGER: ""
+  NODE_VERSION: '24'
+
+jobs:
+  destroy-infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Setup AWS OIDC
+        uses: ./.github/actions/setup-aws-oidc
+        with:
+          aws_region: ${{ inputs.aws_region }}
+          account_id: ${{ secrets.MODELS_ACCOUNT_ID }}
+          role_duration_seconds: '14400'
+      - name: Setup CDK
+        uses: ./.github/actions/setup-cdk
+        with:
+          node_version: ${{ env.NODE_VERSION }}
+      - name: Generate deployment.json
+        uses: ./.github/actions/generate-deployment-json
+        with:
+          account_id: ${{ secrets.MODELS_ACCOUNT_ID }}
+          build_from_source: 'false'
+          deploy_integration_tests: 'true'
+      - name: Build and synthesize CDK
+        working-directory: cdk
+        run: |
+          npm run build
+          cdk synth
+      - name: Read deployment config
+        id: config
+        working-directory: cdk
+        run: |
+          PROJECT_NAME=$(python3 -c "import json; print(json.load(open('bin/deployment/deployment.json'))['projectName'])")
+          echo "project_name=${PROJECT_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Destroy CDK infrastructure
+        working-directory: cdk
+        env:
+          PROJECT_NAME: ${{ steps.config.outputs.project_name }}
+        run: bash ../scripts/destroy.sh "${PROJECT_NAME}"

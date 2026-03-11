@@ -9,12 +9,12 @@ import {
   Bucket,
   BucketAccessControl,
   BucketEncryption,
-  ObjectOwnership,
+  ObjectOwnership
 } from "aws-cdk-lib/aws-s3";
 import {
   BucketDeployment,
   ServerSideEncryption,
-  Source,
+  Source
 } from "aws-cdk-lib/aws-s3-deployment";
 import { NagSuppressions } from "cdk-nag";
 import { Construct } from "constructs";
@@ -45,7 +45,7 @@ export class TestImageryConfig extends BaseConfig {
     super({
       S3_IMAGE_BUCKET_PREFIX: "osml-models-test-imagery",
       S3_TEST_IMAGES_PATH: "assets/imagery/",
-      ...config,
+      ...config
     });
   }
 }
@@ -109,7 +109,7 @@ export class TestImagery extends Construct {
       removalPolicy: this.removalPolicy,
       objectOwnership: ObjectOwnership.OBJECT_WRITER,
       versioned: props.account.prodLike,
-      accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
+      accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL
     });
 
     // Suppress S3 bucket logging for test bucket
@@ -120,10 +120,10 @@ export class TestImagery extends Construct {
           id: "AwsSolutions-S1",
           reason:
             "Test imagery bucket does not require server access logging as it only contains " +
-            "non-sensitive test data used for integration testing.",
-        },
+            "non-sensitive test data used for integration testing."
+        }
       ],
-      true,
+      true
     );
 
     // Deploy test images into the bucket
@@ -135,7 +135,7 @@ export class TestImagery extends Construct {
       useEfs: true,
       vpc: props.vpc,
       retainOnDelete: props.account.prodLike,
-      serverSideEncryption: ServerSideEncryption.AES_256,
+      serverSideEncryption: ServerSideEncryption.AES_256
     });
 
     // CDK BucketDeployment creates a default role and policy with deeply nested constructs
@@ -147,20 +147,20 @@ export class TestImagery extends Construct {
         id: "AwsSolutions-IAM4",
         reason:
           "CDK BucketDeployment creates a default service role with AWS managed policies. " +
-          "These are required by the CDK BucketDeployment construct and cannot be replaced.",
+          "These are required by the CDK BucketDeployment construct and cannot be replaced."
       },
       {
         id: "AwsSolutions-IAM5",
         reason:
           "CDK BucketDeployment creates a default policy with wildcard permissions. " +
-          "These are required for the deployment functionality.",
+          "These are required for the deployment functionality."
       },
       {
         id: "AwsSolutions-L1",
         reason:
           "CDK BucketDeployment uses a Lambda function with a runtime version managed by CDK. " +
-          "The runtime version is controlled by the CDK framework and cannot be directly configured.",
-      },
+          "The runtime version is controlled by the CDK framework and cannot be directly configured."
+      }
     ]);
   }
 }

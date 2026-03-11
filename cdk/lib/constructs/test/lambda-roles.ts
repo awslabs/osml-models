@@ -7,7 +7,7 @@ import {
   IRole,
   PolicyStatement,
   Role,
-  ServicePrincipal,
+  ServicePrincipal
 } from "aws-cdk-lib/aws-iam";
 import { NagSuppressions } from "cdk-nag";
 import { Construct } from "constructs";
@@ -24,8 +24,8 @@ export interface LambdaRoleProps {
   readonly roleName: string;
   /** Optional existing Lambda role to use instead of creating a new one. */
   readonly existingLambdaRole?: IRole;
-  /** The SageMaker endpoint name to grant invoke permissions. */
-  readonly endpointName: string;
+  /** The SSM parameter name containing the SageMaker endpoint name. */
+  readonly endpointSsmParamName: string;
   /** The S3 bucket ARN for test imagery access. */
   readonly testBucketArn: string;
   /** The project name for CloudWatch Logs permissions. */
@@ -56,18 +56,30 @@ export class LambdaRole extends Construct {
       const role = new Role(this, "Role", {
         roleName: props.roleName,
         assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
-        description: `IAM role for ${props.projectName} integration test Lambda function`,
+        description: `IAM role for ${props.projectName} integration test Lambda function`
       });
 
-      // Add permissions to invoke SageMaker endpoint
+      // Add permissions to invoke and describe SageMaker endpoints (wildcard because endpoint
+      // name is resolved at runtime via SSM, avoiding cross-stack dependency)
       role.addToPolicy(
         new PolicyStatement({
           effect: Effect.ALLOW,
-          actions: ["sagemaker:InvokeEndpoint"],
+          actions: ["sagemaker:InvokeEndpoint", "sagemaker:DescribeEndpoint"],
           resources: [
-            `arn:aws:sagemaker:${props.account.region}:${props.account.id}:endpoint/${props.endpointName}`,
-          ],
-        }),
+            `arn:aws:sagemaker:${props.account.region}:${props.account.id}:endpoint/*`
+          ]
+        })
+      );
+
+      // Add permissions to read the SSM parameter for endpoint name
+      role.addToPolicy(
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ["ssm:GetParameter"],
+          resources: [
+            `arn:aws:ssm:${props.account.region}:${props.account.id}:parameter${props.endpointSsmParamName}`
+          ]
+        })
       );
 
       // Add permissions for S3 access to test bucket
@@ -75,8 +87,8 @@ export class LambdaRole extends Construct {
         new PolicyStatement({
           effect: Effect.ALLOW,
           actions: ["s3:GetObject", "s3:ListBucket"],
-          resources: [props.testBucketArn, `${props.testBucketArn}/*`],
-        }),
+          resources: [props.testBucketArn, `${props.testBucketArn}/*`]
+        })
       );
 
       // Add permissions for CloudWatch Logs
@@ -86,12 +98,12 @@ export class LambdaRole extends Construct {
           actions: [
             "logs:CreateLogGroup",
             "logs:CreateLogStream",
-            "logs:PutLogEvents",
+            "logs:PutLogEvents"
           ],
           resources: [
-            `arn:aws:logs:${props.account.region}:${props.account.id}:log-group:/aws/lambda/${props.projectName}-integration-test:*`,
-          ],
-        }),
+            `arn:aws:logs:${props.account.region}:${props.account.id}:log-group:/aws/lambda/${props.projectName}-integration-test:*`
+          ]
+        })
       );
 
       // Add VPC permissions for Lambda
@@ -103,13 +115,13 @@ export class LambdaRole extends Construct {
             "ec2:DescribeNetworkInterfaces",
             "ec2:DeleteNetworkInterface",
             "ec2:AssignPrivateIpAddresses",
-            "ec2:UnassignPrivateIpAddresses",
+            "ec2:UnassignPrivateIpAddresses"
           ],
-          resources: ["*"],
-        }),
+          resources: ["*"]
+        })
       );
 
-      // Suppress IAM wildcard permissions for VPC network interface management
+      // Suppress IAM wildcard permissions
       NagSuppressions.addResourceSuppressions(
         role,
         [
@@ -119,11 +131,13 @@ export class LambdaRole extends Construct {
               "Lambda VPC execution requires wildcard permissions for EC2 network interface management. " +
               "These permissions (CreateNetworkInterface, DescribeNetworkInterfaces, DeleteNetworkInterface) " +
               "cannot be scoped to specific resources as the network interface IDs are dynamically generated. " +
-              "S3 bucket permissions include wildcard for object access which is required for test image retrieval.",
-            appliesTo: ["Resource::*"],
-          },
+              "S3 bucket permissions include wildcard for object access which is required for test image retrieval. " +
+              "SageMaker endpoint permissions use a project-scoped wildcard because the endpoint name is " +
+              "resolved at runtime via SSM to avoid cross-stack CloudFormation dependencies.",
+            appliesTo: ["Resource::*"]
+          }
         ],
-        true,
+        true
       );
 
       this.lambdaRole = role;

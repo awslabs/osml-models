@@ -1,0 +1,21 @@
+# Copyright 2026 Amazon.com, Inc. or its affiliates.
+
+FROM public.ecr.aws/lambda/python:3.13 AS integ
+
+# Give sudo permissions
+USER root
+
+# Install test dependencies
+RUN pip install --no-cache-dir \
+    boto3 \
+    pytest \
+    python-json-logger
+
+# Copy the test code to the LAMBDA_TASK_ROOT directory
+COPY test/ ${LAMBDA_TASK_ROOT}/test/
+
+# Create package markers
+RUN echo "# Copyright 2026 Amazon.com, Inc. or its affiliates." > ${LAMBDA_TASK_ROOT}/__init__.py
+
+# Set the entry point for the container
+CMD ["test.integ_processor.handler"]

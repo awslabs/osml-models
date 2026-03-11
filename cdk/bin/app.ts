@@ -38,7 +38,7 @@ function main(): void {
   // Create environment configuration
   const env = {
     account: deployment.account.id,
-    region: deployment.account.region,
+    region: deployment.account.region
   };
 
   // -----------------------------------------------------------------------------
@@ -54,17 +54,17 @@ function main(): void {
     {
       env: {
         account: deployment.account.id,
-        region: deployment.account.region,
-      },
-    },
+        region: deployment.account.region
+      }
+    }
   );
   const sagemakerRole = new SageMakerRole(
     sagemakerRoleStack,
     `${deployment.projectName}-SageMakerRole`,
     {
       account: deployment.account,
-      roleName: `${deployment.projectName}-SageMakerRole`,
-    },
+      roleName: `${deployment.projectName}-SageMakerRole`
+    }
   );
 
   // Instantiate Network Stack
@@ -73,8 +73,8 @@ function main(): void {
     `${deployment.projectName}-Network`,
     {
       env,
-      deployment,
-    },
+      deployment
+    }
   );
 
   // -----------------------------------------------------------------------------
@@ -94,8 +94,8 @@ function main(): void {
       vpc: networkStack.network.vpc,
       selectedSubnets: networkStack.network.selectedSubnets,
       securityGroup: networkStack.network.securityGroup,
-      sagemakerRole: sagemakerRole.role,
-    },
+      sagemakerRole: sagemakerRole.role
+    }
   );
 
   // Add dependency from Model Endpoint Stack to Network Stack and SageMaker Role Stack
@@ -112,15 +112,14 @@ function main(): void {
         deployment,
         vpc: networkStack.network.vpc,
         selectedSubnets: networkStack.network.selectedSubnets,
-        securityGroup: networkStack.network.securityGroup,
-        modelEndpoint: {
-          modelEndpoint: modelEndpointStack.resources.modelEndpoint,
-        },
-      },
+        securityGroup: networkStack.network.securityGroup
+      }
     );
 
-    // Add dependency from Integration Test Stack to Model Endpoint Stack
-    integrationTestStack.addDependency(modelEndpointStack);
+    // IntegrationTest stack only depends on Network (for VPC/subnets/SG).
+    // It is decoupled from the Dataplane stack — the endpoint name is resolved
+    // at runtime via SSM parameter, allowing parallel destruction.
+    integrationTestStack.addDependency(networkStack);
   }
 
   // Note: CDK-Nag validation is disabled to match other OSML repos (model-runner, tile-server)

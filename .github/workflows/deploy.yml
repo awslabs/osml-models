@@ -1,0 +1,78 @@
+# Copyright 2026 Amazon.com, Inc. or its affiliates.
+
+name: Deploy Infrastructure
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+      build_from_source:
+        required: false
+        type: boolean
+        default: true
+      deploy_integration_tests:
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      MODELS_ACCOUNT_ID:
+        required: true
+      HF_TOKEN:
+        required: true
+
+env:
+  AWS_REGION: ${{ inputs.aws_region }}
+  AWS_PAGER: ""
+  NODE_VERSION: '24'
+
+jobs:
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          lfs: 'true'
+      - name: Setup AWS OIDC
+        uses: ./.github/actions/setup-aws-oidc
+        with:
+          aws_region: ${{ inputs.aws_region }}
+          account_id: ${{ secrets.MODELS_ACCOUNT_ID }}
+          role_duration_seconds: '14400'
+      - name: Download SAM3 model weights from Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          curl -LsSf https://hf.co/cli/install.sh | bash
+          echo "Downloading SAM3 checkpoint from facebook/sam3..."
+          hf download facebook/sam3 sam3.pt \
+            --local-dir assets \
+            --token "$HF_TOKEN"
+          ls -lh assets/sam3.pt
+          echo "✓ SAM3 model weights downloaded successfully"
+      - name: Setup CDK
+        uses: ./.github/actions/setup-cdk
+        with:
+          node_version: ${{ env.NODE_VERSION }}
+      - name: Generate deployment.json
+        uses: ./.github/actions/generate-deployment-json
+        with:
+          account_id: ${{ secrets.MODELS_ACCOUNT_ID }}
+          build_from_source: ${{ inputs.build_from_source }}
+          deploy_integration_tests: ${{ inputs.deploy_integration_tests }}
+      - name: Build and synthesize CDK
+        working-directory: cdk
+        run: cdk synth
+      - name: Bootstrap CDK
+        working-directory: cdk
+        run: cdk bootstrap --force
+      - name: Deploy CDK infrastructure
+        working-directory: cdk
+        run: cdk deploy --all --require-approval never --concurrency 3

@@ -67,7 +67,7 @@ export class TestConfig extends BaseConfig {
       TEST_CONTAINER_URI: "awsosml/osml-models-test:latest",
       TEST_TIMEOUT_SECONDS: 600,
       MEMORY_SIZE_MB: 1024,
-      ...config,
+      ...config
     };
     super(mergedConfig);
   }
@@ -82,8 +82,8 @@ export interface TestProps {
   readonly lambdaRole: IRole;
   /** Optional security group to use. */
   readonly securityGroup?: ISecurityGroup;
-  /** The SageMaker endpoint name to test. */
-  readonly endpointName: string;
+  /** The SSM parameter name containing the SageMaker endpoint name. */
+  readonly endpointSsmParamName: string;
   /** The project name. */
   readonly projectName: string;
   /** The test configuration. */
@@ -109,7 +109,7 @@ export class Test extends Construct {
     } else {
       // Create a new default configuration
       this.config = new TestConfig(
-        (props.config as unknown as Partial<ConfigType>) ?? {},
+        (props.config as unknown as Partial<ConfigType>) ?? {}
       );
     }
 
@@ -127,8 +127,8 @@ export class Test extends Construct {
           file: this.config.TEST_CONTAINER_DOCKERFILE,
           followSymlinks: SymlinkFollowMode.ALWAYS,
           target: this.config.TEST_CONTAINER_BUILD_TARGET,
-          platform: Platform.LINUX_AMD64,
-        },
+          platform: Platform.LINUX_AMD64
+        }
       );
     } else {
       // Use pre-built image from registry
@@ -137,7 +137,7 @@ export class Test extends Construct {
       return DockerImageCode.fromImageAsset(__dirname, {
         file: "Dockerfile.tmp",
         followSymlinks: SymlinkFollowMode.ALWAYS,
-        platform: Platform.LINUX_AMD64,
+        platform: Platform.LINUX_AMD64
       });
     }
   }
@@ -146,14 +146,14 @@ export class Test extends Construct {
     const logGroup = new LogGroup(this, "TestRunnerLogGroup", {
       logGroupName: `/aws/lambda/${props.projectName}-integration-test`,
       retention: RetentionDays.ONE_MONTH,
-      removalPolicy: RemovalPolicy.DESTROY,
+      removalPolicy: RemovalPolicy.DESTROY
     });
 
     const runner = new DockerImageFunction(this, "TestRunner", {
       code: this.testImageCode,
       vpc: props.vpc,
       vpcSubnets: {
-        subnetType: SubnetType.PRIVATE_WITH_EGRESS,
+        subnetType: SubnetType.PRIVATE_WITH_EGRESS
       },
       role: props.lambdaRole,
       timeout: Duration.seconds(this.config.TEST_TIMEOUT_SECONDS),
@@ -162,9 +162,9 @@ export class Test extends Construct {
       securityGroups: props.securityGroup ? [props.securityGroup] : [],
       logGroup: logGroup,
       environment: {
-        ENDPOINT_NAME: props.endpointName,
-        PROJECT_NAME: props.projectName,
-      },
+        ENDPOINT_SSM_PARAM: props.endpointSsmParamName,
+        PROJECT_NAME: props.projectName
+      }
     });
 
     // Suppress Lambda runtime version warning
@@ -175,10 +175,10 @@ export class Test extends Construct {
           id: "AwsSolutions-L1",
           reason:
             "Lambda runtime version is managed by the Docker base image (public.ecr.aws/lambda/python:3.13). " +
-            "The function will be updated when the base image is updated.",
-        },
+            "The function will be updated when the base image is updated."
+        }
       ],
-      true,
+      true
     );
 
     return runner;

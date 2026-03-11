@@ -47,55 +47,40 @@ repos:
         # uncomment the line below if using "finch" on MacOS
         # args: [ "-f" ]
 
-  - repo: https://github.com/sbrunner/pre-commit-copyright
-    rev: 1.6.1
-    hooks:
-      - id: copyright
-        name: update copyright
-        exclude: |
-          (?x)^(
-            doc/.*|
-            ^\..+|
-            .+\.md|
-            .+\.ipynb|
-            test/sample_data/.*|
-            LICENSE|
-            NOTICE|
-            tox.ini|
-            pyproject.toml|
-            setup.cfg|
-            setup.py|
-            py.typed
-          )$
-      - id: copyright-required
-        name: require copyright
-        exclude: |
-          (?x)^(
-            doc/.*|
-            ^\..+|
-            .+\.md|
-            .+\.ipynb|
-            test/sample_data/.*|
-            LICENSE|
-            NOTICE|
-            tox.ini|
-            pyproject.toml|
-            setup.cfg|
-            setup.py|
-            py.typed|
-            cdk/\..+|
-            cdk/jest.config.js|
-            cdk/eslint.config.mjs|
-            cdk/package.json|
-            cdk/package-lock.json|
-            cdk/tsconfig.json|
-            cdk/cdk.json|
-            cdk/.+\.example$|
-            .+\.tmp$
-          )$
-
   - repo: local
     hooks:
+      - id: check-copyright
+        name: Check for copyright
+        entry: python .github/hooks/check-copyright.py
+        language: system
+        exclude: |
+          (?x)^(
+            ^\..+|
+            .+\.md$|
+            .+\.json$|
+            .+\.ya?ml$|
+            .+\.ipynb$|
+            .+\.lock$|
+            .+\.config\.js$|
+            .+\.config\.mjs$|
+            .*/node_modules/.*|
+            .*/cdk\.out/.*|
+            .*/dist/.*|
+            .*/\.tox/.*|
+            LICENSE|
+            NOTICE|
+            tox\.ini|
+            pyproject\.toml|
+            setup\.cfg|
+            setup\.py|
+            py\.typed|
+            cdk/tsconfig\.json|
+            cdk/cdk\.json|
+            cdk/cdk\.context\.json|
+            cdk/\.prettierrc|
+            cdk/bin/deployment/.*\.json\.example|
+          )$
+
       - id: npm-install
         name: npm install
         entry: bash -c 'cd cdk && npm ci'

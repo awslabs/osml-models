@@ -20,7 +20,7 @@ import {
   createTestDeploymentConfig,
   createTestEnvironment,
   createTestVpc,
-  generateNagReport,
+  generateNagReport
 } from "./test-utils";
 
 describe("ModelEndpointStack", () => {
@@ -36,24 +36,24 @@ describe("ModelEndpointStack", () => {
     deploymentConfig = createTestDeploymentConfig({
       modelEndpointConfig: {
         BUILD_FROM_SOURCE: false,
-        CONTAINER_URI: "test-container:latest",
-      },
+        CONTAINER_URI: "test-container:latest"
+      }
     });
 
     const vpcStack = new Stack(app, "VpcStack", {
-      env: createTestEnvironment(),
+      env: createTestEnvironment()
     });
     vpc = createTestVpc(vpcStack);
     securityGroup = new SecurityGroup(vpcStack, "TestSecurityGroup", {
       vpc,
-      description: "Test security group",
+      description: "Test security group"
     });
 
     const roleStack = new Stack(app, "RoleStack", {
-      env: createTestEnvironment(),
+      env: createTestEnvironment()
     });
     sagemakerRole = new Role(roleStack, "SageMakerRole", {
-      assumedBy: new ServicePrincipal("sagemaker.amazonaws.com"),
+      assumedBy: new ServicePrincipal("sagemaker.amazonaws.com")
     });
   });
 
@@ -63,10 +63,10 @@ describe("ModelEndpointStack", () => {
       deployment: deploymentConfig,
       vpc: vpc,
       selectedSubnets: {
-        subnetType: undefined,
+        subnetType: undefined
       },
       securityGroup: securityGroup,
-      sagemakerRole: sagemakerRole,
+      sagemakerRole: sagemakerRole
     });
 
     // Stack should exist and have correct termination protection
@@ -82,12 +82,12 @@ describe("ModelEndpointStack", () => {
         id: "123456789012",
         region: "us-west-2",
         prodLike: true,
-        isAdc: false,
+        isAdc: false
       },
       modelEndpointConfig: {
         BUILD_FROM_SOURCE: false,
-        CONTAINER_URI: "test-container:latest",
-      },
+        CONTAINER_URI: "test-container:latest"
+      }
     });
 
     const stack = new ModelEndpointStack(app, "TestModelEndpointStack", {
@@ -95,10 +95,10 @@ describe("ModelEndpointStack", () => {
       deployment: prodDeploymentConfig,
       vpc: vpc,
       selectedSubnets: {
-        subnetType: undefined,
+        subnetType: undefined
       },
       securityGroup: securityGroup,
-      sagemakerRole: sagemakerRole,
+      sagemakerRole: sagemakerRole
     });
 
     expect(stack.terminationProtection).toBe(true);
@@ -110,10 +110,10 @@ describe("ModelEndpointStack", () => {
       deployment: deploymentConfig,
       vpc: vpc,
       selectedSubnets: {
-        subnetType: undefined,
+        subnetType: undefined
       },
       securityGroup: securityGroup,
-      sagemakerRole: sagemakerRole,
+      sagemakerRole: sagemakerRole
     });
 
     // Dataplane should be created
@@ -133,10 +133,10 @@ describe("ModelEndpointStack", () => {
       deployment: deploymentConfig,
       vpc: vpc,
       selectedSubnets: {
-        subnetType: undefined,
+        subnetType: undefined
       },
       securityGroup: securityGroup,
-      sagemakerRole: sagemakerRole,
+      sagemakerRole: sagemakerRole
     });
 
     // VPC should be the same instance
@@ -148,11 +148,11 @@ describe("ModelEndpointStack", () => {
       BUILD_FROM_SOURCE: false,
       CONTAINER_URI: "test-container:latest",
       INSTANCE_TYPE: "ml.g4dn.2xlarge",
-      INITIAL_INSTANCE_COUNT: 2,
+      INITIAL_INSTANCE_COUNT: 2
     };
 
     const deploymentWithConfig = createTestDeploymentConfig({
-      modelEndpointConfig: dataplaneConfigPartial,
+      modelEndpointConfig: dataplaneConfigPartial
     });
 
     const stack = new ModelEndpointStack(app, "TestModelEndpointStack", {
@@ -160,10 +160,10 @@ describe("ModelEndpointStack", () => {
       deployment: deploymentWithConfig,
       vpc: vpc,
       selectedSubnets: {
-        subnetType: undefined,
+        subnetType: undefined
       },
       securityGroup: securityGroup,
-      sagemakerRole: sagemakerRole,
+      sagemakerRole: sagemakerRole
     });
 
     // Stack should be created successfully
@@ -177,10 +177,10 @@ describe("ModelEndpointStack", () => {
       deployment: deploymentConfig,
       vpc: vpc,
       selectedSubnets: {
-        subnetType: undefined,
+        subnetType: undefined
       },
       securityGroup: securityGroup,
-      sagemakerRole: sagemakerRole,
+      sagemakerRole: sagemakerRole
     });
 
     const template = Template.fromStack(stack);
@@ -189,9 +189,9 @@ describe("ModelEndpointStack", () => {
     template.hasOutput("EndpointName", {
       Export: {
         Name: Match.stringLikeRegexp(
-          `.*${deploymentConfig.projectName}-EndpointName.*`,
-        ),
-      },
+          `.*${deploymentConfig.projectName}-EndpointName.*`
+        )
+      }
     });
   });
 });
@@ -210,23 +210,23 @@ describe("cdk-nag Compliance Checks - ModelEndpointStack", () => {
     const deploymentConfig = createTestDeploymentConfig({
       modelEndpointConfig: {
         BUILD_FROM_SOURCE: false,
-        CONTAINER_URI: "test-container:latest",
-      },
+        CONTAINER_URI: "test-container:latest"
+      }
     });
     const vpcStack = new Stack(app, "VpcStack", {
-      env: createTestEnvironment(),
+      env: createTestEnvironment()
     });
     vpc = createTestVpc(vpcStack);
     securityGroup = new SecurityGroup(vpcStack, "TestSecurityGroup", {
       vpc,
-      description: "Test security group",
+      description: "Test security group"
     });
 
     const roleStack = new Stack(app, "RoleStack", {
-      env: createTestEnvironment(),
+      env: createTestEnvironment()
     });
     sagemakerRole = new Role(roleStack, "SageMakerRole", {
-      assumedBy: new ServicePrincipal("sagemaker.amazonaws.com"),
+      assumedBy: new ServicePrincipal("sagemaker.amazonaws.com")
     });
 
     stack = new ModelEndpointStack(app, "TestModelEndpointStack", {
@@ -234,26 +234,26 @@ describe("cdk-nag Compliance Checks - ModelEndpointStack", () => {
       deployment: deploymentConfig,
       vpc: vpc,
       selectedSubnets: {
-        subnetType: undefined,
+        subnetType: undefined
       },
       securityGroup: securityGroup,
-      sagemakerRole: sagemakerRole,
+      sagemakerRole: sagemakerRole
     });
 
     // Add the cdk-nag AwsSolutions Pack with extra verbose logging enabled.
     Aspects.of(stack).add(
       new AwsSolutionsChecks({
-        verbose: true,
-      }),
+        verbose: true
+      })
     );
 
     const errors = Annotations.fromStack(stack).findError(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     const warnings = Annotations.fromStack(stack).findWarning(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     generateNagReport(stack, errors, warnings);
   });
@@ -261,7 +261,7 @@ describe("cdk-nag Compliance Checks - ModelEndpointStack", () => {
   test("No unsuppressed Warnings", () => {
     const warnings = Annotations.fromStack(stack).findWarning(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     expect(warnings).toHaveLength(0);
   });
@@ -269,7 +269,7 @@ describe("cdk-nag Compliance Checks - ModelEndpointStack", () => {
   test("No unsuppressed Errors", () => {
     const errors = Annotations.fromStack(stack).findError(
       "*",
-      Match.stringLikeRegexp("AwsSolutions-.*"),
+      Match.stringLikeRegexp("AwsSolutions-.*")
     );
     expect(errors).toHaveLength(0);
   });

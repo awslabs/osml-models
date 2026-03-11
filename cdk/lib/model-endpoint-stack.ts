@@ -5,12 +5,13 @@
 import { CfnOutput, Environment, Stack, StackProps } from "aws-cdk-lib";
 import { ISecurityGroup, IVpc, SubnetSelection } from "aws-cdk-lib/aws-ec2";
 import { IRole } from "aws-cdk-lib/aws-iam";
+import { StringParameter } from "aws-cdk-lib/aws-ssm";
 import { Construct } from "constructs";
 
 import { DeploymentConfig } from "../bin/deployment/load-deployment";
 import {
   Dataplane,
-  DataplaneConfig,
+  DataplaneConfig
 } from "./constructs/model-endpoint/dataplane";
 
 /**
@@ -67,7 +68,7 @@ export class ModelEndpointStack extends Stack {
   constructor(scope: Construct, id: string, props: ModelEndpointStackProps) {
     super(scope, id, {
       terminationProtection: props.deployment.account.prodLike,
-      ...props,
+      ...props
     });
 
     const { deployment, vpc, selectedSubnets, securityGroup, sagemakerRole } =
@@ -88,7 +89,7 @@ export class ModelEndpointStack extends Stack {
       subnetSelection: selectedSubnets,
       projectName: deployment.projectName,
       sagemakerRole,
-      config: dataplaneConfig,
+      config: dataplaneConfig
     });
 
     // Expose the endpoint name for cross-stack references
@@ -99,7 +100,14 @@ export class ModelEndpointStack extends Stack {
     new CfnOutput(this, "EndpointName", {
       value: this.endpointName,
       description: "SageMaker Endpoint Name",
-      exportName: `${deployment.projectName}-EndpointName`,
+      exportName: `${deployment.projectName}-EndpointName`
+    });
+
+    // Store endpoint name in SSM for cross-stack decoupling
+    new StringParameter(this, "EndpointNameParam", {
+      parameterName: `/${deployment.projectName}/endpoint-name`,
+      stringValue: this.endpointName,
+      description: `SageMaker endpoint name for ${deployment.projectName}`
     });
   }
 }

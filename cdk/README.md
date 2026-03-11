@@ -1008,8 +1008,8 @@ NagSuppressions.addResourceSuppressions(myRole, [
   {
     id: "AwsSolutions-IAM4",
     reason: "AWS managed policy required for SageMaker execution",
-    appliesTo: ["Policy::arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"],
-  },
+    appliesTo: ["Policy::arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"]
+  }
 ]);
 ```
 
